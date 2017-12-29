@@ -35,12 +35,16 @@ test( transform , '\\abcfalse\\ifabc ah\\else oh\\fi' , ' oh' ) ; // disappear?
 // def
 test( transform , '\\def\\mymacro{Hello, world}\\mymacro', 'Hello, world') ;
 
+// def and undefined
+test( transform , '\\def\\affil{496}\\author[\\affil]{John Doe}' , '\\author[496]{John Doe}') ;
+
 // newcommand single argument
 test( transform , '\\newcommand\\aaa[1]{a#1}\\newcommand\\bbb[1]{\\aaa{b#1}}\\bbb{c}', 'abc') ;
 test( transform , '\\newcommand*\\aaa[1]{a#1}\\newcommand*\\bbb[1]{\\aaa{b#1}}\\bbb{c}', 'abc') ;
 
 // newcommand two arguments
 test( transform , '\\newcommand\\swap[2]{#2#1}\\swap{a}{b}', 'ba') ;
+
 
 // comment
 test( transform , '% Lorem ipsum dolor sit amet' , '%' ) ;
