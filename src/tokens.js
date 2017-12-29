@@ -103,7 +103,8 @@ export function* tokens ( string ) {
 	buffer += d ;
       }
       yield [ 'comment' , buffer ] ;
-      buffer = d;
+      if ( i < n ) buffer = d;
+      else buffer = '';
       ++i;
     }
     else {
