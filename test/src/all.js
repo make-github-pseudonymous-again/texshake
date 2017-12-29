@@ -2,41 +2,48 @@ import test from 'ava' ;
 
 import { shakestring } from '../../src' ;
 
-function macro ( t , string , expected ) {
+function transform ( t , string , expected ) {
 	let output = '' ;
 	const out = { 'write' : buffer => output += buffer } ;
 	shakestring(string, out);
 	t.is(output, expected);
 }
 
-macro.title = ( _ , string , expected ) => `shakestring('${string}') === '${expected}'`
+transform.title = ( _ , string , expected ) => `shakestring('${string}') === '${expected}'`
+
+const immutable = ( t , string ) => transform( t , string , string ) ;
+
+immutable.title = ( _ , string ) => transform.title( _ , string , string ) ;
 
 // the empty document
-test( macro , '' , '' ) ;
+test( immutable , '' ) ;
 
 // text-only document
-test( macro , 'Lorem ipsum dolor\nsit amet.' , 'Lorem ipsum dolor\nsit amet.' ) ;
+test( immutable , 'Lorem ipsum dolor\nsit amet.' ) ;
+
+// undefined command
+test( immutable , '\\usepackage{microtype}' ) ;
 
 // if fi
-test( macro , '\\abctrue\\ifabc ah\\fi' , ' ah' ) ; // should
-test( macro , '\\abcfalse\\ifabc ah\\fi' , '' ) ; // the
+test( transform , '\\abctrue\\ifabc ah\\fi' , ' ah' ) ; // should
+test( transform , '\\abcfalse\\ifabc ah\\fi' , '' ) ; // the
 
 // if else fi
-test( macro , '\\abctrue\\ifabc ah\\else oh\\fi' , ' ah' ) ; // space
-test( macro , '\\abcfalse\\ifabc ah\\else oh\\fi' , ' oh' ) ; // disappear?
+test( transform , '\\abctrue\\ifabc ah\\else oh\\fi' , ' ah' ) ; // space
+test( transform , '\\abcfalse\\ifabc ah\\else oh\\fi' , ' oh' ) ; // disappear?
 
 // def
-test( macro , '\\def\\mymacro{Hello, world}\\mymacro', 'Hello, world') ;
+test( transform , '\\def\\mymacro{Hello, world}\\mymacro', 'Hello, world') ;
 
 // newcommand single argument
-test( macro , '\\newcommand\\aaa[1]{a#1}\\newcommand\\bbb[1]{\\aaa{b#1}}\\bbb{c}', 'abc') ;
-test( macro , '\\newcommand*\\aaa[1]{a#1}\\newcommand*\\bbb[1]{\\aaa{b#1}}\\bbb{c}', 'abc') ;
+test( transform , '\\newcommand\\aaa[1]{a#1}\\newcommand\\bbb[1]{\\aaa{b#1}}\\bbb{c}', 'abc') ;
+test( transform , '\\newcommand*\\aaa[1]{a#1}\\newcommand*\\bbb[1]{\\aaa{b#1}}\\bbb{c}', 'abc') ;
 
 // newcommand two arguments
-test( macro , '\\newcommand\\swap[2]{#2#1}\\swap{a}{b}', 'ba') ;
+test( transform , '\\newcommand\\swap[2]{#2#1}\\swap{a}{b}', 'ba') ;
 
 // comment
-test( macro , '% Lorem ipsum dolor sit amet' , '%' ) ;
-test( macro , 'Hello, world% Lorem ipsum dolor sit amet' , 'Hello, world%' ) ;
-test( macro , 'Hello, world % Lorem ipsum dolor sit amet' , 'Hello, world %' ) ;
-test( macro , '1 % 2 \n 3' , '1 %\n 3' ) ;
+test( transform , '% Lorem ipsum dolor sit amet' , '%' ) ;
+test( transform , 'Hello, world% Lorem ipsum dolor sit amet' , 'Hello, world%' ) ;
+test( transform , 'Hello, world % Lorem ipsum dolor sit amet' , 'Hello, world %' ) ;
+test( transform , '1 % 2 \n 3' , '1 %\n 3' ) ;
