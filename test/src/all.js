@@ -28,9 +28,12 @@ test( macro , '\\abcfalse\\ifabc ah\\else oh\\fi' , ' oh' ) ; // disappear?
 // def
 test( macro , '\\def\\mymacro{Hello, world}\\mymacro', 'Hello, world') ;
 
-// newcommand
+// newcommand single argument
 test( macro , '\\newcommand\\aaa[1]{a#1}\\newcommand\\bbb[1]{\\aaa{b#1}}\\bbb{c}', 'abc') ;
 test( macro , '\\newcommand*\\aaa[1]{a#1}\\newcommand*\\bbb[1]{\\aaa{b#1}}\\bbb{c}', 'abc') ;
+
+// newcommand two arguments
+test( macro , '\\newcommand\\swap[2]{#2#1}\\swap{a}{b}', 'ba') ;
 
 // comment
 test( macro , '% Lorem ipsum dolor sit amet' , '%' ) ;
