@@ -1,7 +1,7 @@
 {
   "name": "texshake",
   "description": "Shake your LaTeX syntax tree!",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "Aurélien Ooms <aurelien.ooms@gmail.com>",
   "ava": {
     "require": [
