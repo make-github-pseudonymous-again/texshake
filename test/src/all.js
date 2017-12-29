@@ -35,6 +35,13 @@ test( transform , '\\abcfalse\\ifabc ah\\else oh\\fi' , ' oh' ) ; // disappear?
 // def
 test( transform , '\\def\\mymacro{Hello, world}\\mymacro', 'Hello, world') ;
 
+// defception
+test( transform , '\\def\\abc{\\def\\xyz{7}}\\abc\\xyz', '7') ;
+
+// conditional defs
+test( transform , '\\abctrue\\ifabc\\def\\xyz{A cat.}\\else\\def\\xyz{A dog.}\\fi\\xyz', 'A cat.') ;
+test( transform , '\\abcfalse\\ifabc\\def\\xyz{A cat.}\\else\\def\\xyz{A dog.}\\fi\\xyz', 'A dog.') ;
+
 // def and undefined
 test( transform , '\\def\\affil{496}\\author[\\affil]{John Doe}' , '\\author[496]{John Doe}') ;
 
