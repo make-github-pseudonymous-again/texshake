@@ -1,0 +1,62 @@
+{
+  "name": "texshake",
+  "description": "Shake your LaTeX syntax tree!",
+  "version": "0.0.1",
+  "author": "Aurélien Ooms <aurelien.ooms@gmail.com>",
+  "ava": {
+    "require": [
+      "babel-polyfill",
+      "babel-register"
+    ]
+  },
+  "babel": {
+    "presets": [
+      [
+        "env",
+        {
+          "targets": {
+            "node": "current"
+          }
+        }
+      ]
+    ],
+    "env": {
+      "development": {
+        "sourceMaps": "inline"
+      }
+    }
+  },
+  "bin": "lib/cli.js",
+  "bugs": {
+    "url": "https://github.com/aureooms/texshake/issues"
+  },
+  "dependencies": {
+    "@aureooms/js-grammar": "^2.0.0",
+    "@aureooms/js-itertools": "^3.4.0",
+    "@aureooms/js-stream": "^0.0.2",
+    "babel-polyfill": "^6.26.0"
+  },
+  "devDependencies": {
+    "ava": "^0.24.0",
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "codeclimate-test-reporter": "^0.5.0",
+    "coveralls": "^3.0.0",
+    "np": "^2.18.3",
+    "nyc": "^11.4.1"
+  },
+  "homepage": "https://github.com/aureooms/texshake#readme",
+  "license": "AGPL-3.0",
+  "main": "lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aureooms/texshake"
+  },
+  "scripts": {
+    "build": "rm -rf lib && babel src -d lib",
+    "cover": "nyc --reporter=lcov npm test",
+    "prepare": "npm run build",
+    "release": "np",
+    "test": "ava ./test/src --concurrency 8"
+  }
+}
