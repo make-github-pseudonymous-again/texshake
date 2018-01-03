@@ -24,6 +24,9 @@ test( immutable , 'Lorem ipsum dolor\nsit amet.' ) ;
 // undefined command
 test( immutable , '\\usepackage{microtype}' ) ;
 
+// Stars in some text
+test( immutable , '*Lorem * ipsum* dolor sit $a*$ \\(m*e^*t_*\\)*' ) ;
+
 // if fi
 test( transform , '\\abctrue\\ifabc ah\\fi' , ' ah' ) ; // should
 test( transform , '\\abcfalse\\ifabc ah\\fi' , '' ) ; // the
@@ -31,6 +34,9 @@ test( transform , '\\abcfalse\\ifabc ah\\fi' , '' ) ; // the
 // if else fi
 test( transform , '\\abctrue\\ifabc ah\\else oh\\fi' , ' ah' ) ; // space
 test( transform , '\\abcfalse\\ifabc ah\\else oh\\fi' , ' oh' ) ; // disappear?
+
+// with a newif
+test( transform , '\\newif\\ifabc\\abctrue\\ifabc ah\\fi' , ' ah' ) ; // should
 
 // def
 test( transform , '\\def\\mymacro{Hello, world}\\mymacro', 'Hello, world') ;
