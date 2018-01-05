@@ -20,14 +20,26 @@ export function shake ( out , tree , variables , args ) {
 	  // ifcmd
 	  break;
 	case 2:
-	  variable = tree.children[0].buffer.substr(3); // ifcmd
-	  const flag = variables.get(variable);
-	  if (flag) shake(out, tree.children[1] , variables , args) ;
-	  else if ( tree.children[2].production.id === 0 ) {
-	    // else
-	    shake(out, tree.children[2].children[1] , variables , args) ;
+	  variable = tree.children[0].buffer.substr(3);
+	  if (variables.has(variable)) {
+	    // ifcmd
+	    const flag = variables.get(variable);
+	    if (flag) shake(out, tree.children[1] , variables , args) ;
+	    else if ( tree.children[2].production.id === 0 ) {
+	      // else
+	      shake(out, tree.children[2].children[1] , variables , args) ;
+	    }
+	    // fi
 	  }
-	  // fi
+	  else {
+	    out.write(tree.children[0].buffer); // ifcmd
+	    shake(out, tree.children[1] , variables , args) ;
+	    if ( tree.children[2].production.id === 0 ) {
+	      out.write('\\else'); // else
+	      shake(out, tree.children[2].children[1] , variables , args) ;
+	    }
+	    out.write('\\fi'); // fi
+	  }
 	  break;
 	case 3:
 	  buffer = tree.children[0].buffer; // falsecmd
