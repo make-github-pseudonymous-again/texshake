@@ -1,4 +1,4 @@
-import { next , chain } from '@aureooms/js-itertools' ;
+import { chain } from '@aureooms/js-itertools' ;
 import { ast } from '@aureooms/js-grammar' ;
 
 const empty = {
