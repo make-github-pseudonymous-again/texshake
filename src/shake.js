@@ -1,178 +1,244 @@
-export function shake ( out , tree , variables , args ) {
+import { next , chain } from '@aureooms/js-itertools' ;
+import { ast } from '@aureooms/js-grammar' ;
 
-  let variable , buffer , cmd , nargs , expandsto ;
+const empty = {
+  'type' : 'node' ,
+  'nonterminal' : 'empty' ,
+  'production' : 'main' ,
+  'children' : [] ,
+} ;
 
-  while ( tree.nonterminal === 0 ) {
-    // eliminate expensive tail-recursion
-    if ( tree.production.id === 1 ) return ;
-    shake( out , tree.children[0] , variables , args ) ; // 1
-    tree = tree.children[1]; // 0
-  }
+const err = ( nonterminal , production ) => () => {
+  throw new Error(`${nonterminal}.${production} should have been handled before`);
+} ;
 
-  switch ( tree.nonterminal ) {
-    case 1:
-      switch ( tree.production.id ) {
-	case 0:
-	  out.write(tree.children[0].buffer); // text
-	  break;
-	case 1:
-	  // newif
-	  // ifcmd
-	  break;
-	case 2:
-	  variable = tree.children[0].buffer.substr(3);
-	  if (variables.has(variable)) {
-	    // ifcmd
-	    const flag = variables.get(variable);
-	    if (flag) shake(out, tree.children[1] , variables , args) ;
-	    else if ( tree.children[2].production.id === 0 ) {
-	      // else
-	      shake(out, tree.children[2].children[1] , variables , args) ;
-	    }
-	    // fi
-	  }
-	  else {
-	    out.write(tree.children[0].buffer); // ifcmd
-	    shake(out, tree.children[1] , variables , args) ;
-	    if ( tree.children[2].production.id === 0 ) {
-	      out.write('\\else'); // else
-	      shake(out, tree.children[2].children[1] , variables , args) ;
-	    }
-	    out.write('\\fi'); // fi
-	  }
-	  break;
-	case 3:
-	  buffer = tree.children[0].buffer; // falsecmd
-	  variable = buffer.substring(1,buffer.length-5);
-	  variables.set(variable, false);
-	  break;
-	case 4:
-	  buffer = tree.children[0].buffer; // truecmd
-	  variable = buffer.substring(1,buffer.length-4);
-	  variables.set(variable, true);
-	  break;
-	case 5:
-	  out.write('%'); // comment
-	  break;
-	case 6:
-	  cmd = tree.children[0].buffer; // othercmd
-	  if ( tree.children[1].production.id === 0 ) cmd += '*';
-	  const optargsnode = tree.children[2];
-	  const hasoptargs = optargsnode.production.id === 0 ;
-	  let argsnode = tree.children[3] ;
-	  const cmdargs = [];
-	  while ( argsnode.production.id === 0 ) {
-	    // {
-	    cmdargs.push(argsnode.children[1]) ;
-	    // }
-	    argsnode = argsnode.children[3];
-	  }
-	  if (!hasoptargs && variables.has(cmd)) { // too hard to parse opt args currently
-	    [ nargs , expandsto ] = variables.get(cmd) ;
-	    if (cmdargs.length !== nargs) throw new Error('nargs does not match') ;
-	    shake(out, expandsto, variables, [ args , cmdargs ] );
-	  }
-	  else {
-	    out.write(cmd);
-	    if (hasoptargs) {
-	      out.write('[');
-	      shake(out, optargsnode.children[1], variables, args);
-	      out.write(']');
-	    }
-	    for ( const subtree of cmdargs ) {
-	      out.write('{');
-	      shake(out, subtree, variables, args);
-	      out.write('}');
-	    }
-	  }
-	  break;
-	case 7:
-	  // def
-	  cmd = tree.children[1].buffer; // othercmd
-	  // {
-	  variables.set(cmd, [0, tree.children[3]]);
-	  // }
-	  break;
-	case 8:
-	  // newcommand
-	  shake( out , tree.children[1] , variables , args) ;
-	  break;
-	case 9:
-	  out.write('{'); // {
-	  shake( out , tree.children[1] , variables , args) ;
-	  out.write('}'); // }
-	  break;
-	case 10:
-	  out.write('['); // [
-	  shake( out , tree.children[1] , variables , args) ;
-	  out.write(']'); // ]
-	  break;
-	case 11:
-	  out.write('*'); // *
-	  break;
-	case 12:
-	  //throw new Error('Should never reach case 1.12 because handled before.');
-	  const i = parseInt(tree.children[0].buffer.substr(1), 10) - 1; // arg
-	  if ( i >= args[1].length ) throw new Error('shake 1.12: not enough arguments') ;
-	  const subtree = args[1][i] // arg
-	  shake(out, subtree, variables, args[0]);
-	  break;
+const t = ast.transform ;
+const m = ( children , match , ctx ) => ast.cmap( child => t( child , match , ctx ) , children ) ;
+
+export const shake = {
+
+  "blocks" : {
+
+    "add" : ( tree , match , ctx ) => ({
+      "type" : "node" ,
+      "nonterminal" : "blocks" ,
+      "production" : "add" ,
+      "children" : m( tree.children , match , ctx ) ,
+    }) ,
+
+    "end" : () => empty ,
+
+  } ,
+
+  "block" : {
+
+    "text" : tree => tree ,
+
+    "newif": () => empty ,
+
+    "ifcmd": ( tree , match , ctx ) => {
+
+      const [ ifcmd , block1 , endif ] = tree.children ;
+      const variable = ifcmd.buffer.substr(3);
+
+      if (ctx.variables.has(variable)) {
+	const flag = ctx.variables.get(variable);
+	if (flag) return t( block1 , match , ctx ) ;
+	else if ( endif.production === "elsefi" ) {
+	  const [ _else , block2 , _fi ] = endif.children ;
+	  return t( block2 , match , ctx ) ;
+	}
+	else return empty ;
       }
-      break;
-    case 2:
-      throw new Error('Should never reach case 2 because handled before.');
-    case 3:
-      switch ( tree.production.id ) {
-	case 0:
-	  // {
-	  cmd = tree.children[1].buffer; // othercmd
-	  // }
-	  nargs = 0;
-	  if (tree.children[3].production.id === 0) {
-	    // [
-	    nargs = parseInt(tree.children[3].children[1].buffer, 10); // text
-	    // ]
-	  }
-	  // {
-	  variables.set(cmd, [ nargs , tree.children[5] ]);
-	  // }
-	  break;
-	case 1:
-	  cmd = tree.children[0].buffer; // othercmd
-	  nargs = 0;
-	  if (tree.children[1].production.id === 0) {
-	    // [
-	    nargs = parseInt(tree.children[1].children[1].buffer, 10); // text
-	    // ]
-	  }
-	  // {
-	  variables.set(cmd, [ nargs , tree.children[3] ]);
-	  // }
-	  break;
-	case 2:
-	  // *
-	  cmd = tree.children[1].buffer; // othercmd
-	  // do not know what to do with '*' at the moment
-	  nargs = 0;
-	  if (tree.children[2].production.id === 0) {
-	    // [
-	    nargs = parseInt(tree.children[2].children[1].buffer, 10); // text
-	    // ]
-	  }
-	  // {
-	  variables.set(cmd, [ nargs, tree.children[4]]);
-	  // }
-	  break;
-      }
-      break;
-    case 4:
-      throw new Error('Should never reach case 4 because handled before.');
-    case 5:
-      throw new Error('Should never reach case 5 because handled before.');
-    case 6:
-      throw new Error('Should never reach case 6 because handled before.');
-    case 7:
-      throw new Error('Should never reach case 7 because handled before.');
-  }
 
-}
+      return {
+	'type' : 'node' ,
+	'nonterminal' : 'block' ,
+	'production' : 'ifcmd' ,
+	'children' : chain( [ [ ifcmd ] , m( [block1, endif] , match , ctx ) ] ) ,
+      } ;
+
+    } ,
+
+    "falsecmd" : ( tree , _ , ctx ) => {
+      const [ falsecmd ] = tree.children ;
+      const buffer = falsecmd.buffer;
+      const variable = buffer.substring(1, buffer.length-5);
+      ctx.variables.set(variable, false);
+      return empty;
+    } ,
+
+    "truecmd" : ( tree , _ , ctx ) => {
+      const [ truecmd ] = tree.children ;
+      const buffer = truecmd.buffer;
+      const variable = buffer.substring(1, buffer.length-4);
+      ctx.variables.set(variable, true);
+      return empty;
+    } ,
+
+    "comment": ( ) => ({
+      'type' : 'leaf' ,
+      'terminal' : 'comment' ,
+      'buffer' : '%' ,
+    }) ,
+
+    "othercmd": ( tree , match , ctx ) => {
+      const [ othercmd , optstar , optargs , args ] = tree.children ;
+      let cmd = othercmd.buffer;
+      if ( optstar.production === 'yes' ) cmd += '*';
+      const hasoptargs = optargs.production === 'yes' ;
+      const cmdargs = [];
+      let arg_i = args
+      while ( arg_i.production === 'add' ) {
+	const [ _open , arg , _close , argstail ] = arg_i.children ;
+	cmdargs.push(arg) ;
+	arg_i = argstail ;
+      }
+      if (!hasoptargs && ctx.variables.has(cmd)) {
+	// too hard to parse opt args currently
+	const [ nargs , expandsto ] = ctx.variables.get(cmd) ;
+	if (cmdargs.length !== nargs) throw new Error(`Command ${cmd} is defined with ${nargs} arguments but ${cmdargs.length} were given.`) ;
+	return t( expandsto , match , { variables: ctx.variables , args: [ ctx.args , cmdargs ] } ) ;
+      }
+      else return {
+	'type' : 'node' ,
+	'nonterminal' : 'block' ,
+	'production' : 'othercmd' ,
+	'children' : chain( [ [ othercmd , optstar ] , m([optargs, args], match, ctx) ] ) ,
+      } ;
+    } ,
+
+    "def": ( tree , match , { variables } ) => {
+      const [ def , othercmd , _2 , blocks , _3 ] = tree.children ;
+      const cmd = othercmd.buffer;
+      variables.set(cmd, [0, ast.materialize(blocks)]);
+      return empty ;
+    } ,
+
+    "newcommand": ( tree , match , ctx ) => {
+      const [ newcommand , cmddef ] = tree.children ;
+      return t( cmddef , match , ctx ) ;
+    } ,
+
+    "{blocks}": ( tree , match , ctx ) => {
+      const [ _open , blocks , _close ] = tree.children ;
+      return {
+	"type" : "node" ,
+	"nonterminal" : "block" ,
+	"production" : "{blocks}" ,
+	"children" : chain( [ [ _open ] , m( [ blocks ] , match , ctx ) , [ _close ] ] ) ,
+      } ;
+    } ,
+
+    "[blocks]": ( tree , match , ctx ) => {
+      const [ _open , blocks , _close ] = tree.children ;
+      return {
+	"type" : "node" ,
+	"nonterminal" : "block" ,
+	"production" : "{blocks}" ,
+	"children" : chain( [ [ _open ] , m( [ blocks ] , match , ctx ) , [ _close ] ] ) ,
+      } ;
+    } ,
+
+    "*" : tree => tree ,
+
+    "arg": ( tree , match , { args , variables } ) => {
+      const [ arg ] = tree.children ;
+      const i = parseInt(arg.buffer.substr(1), 10) - 1; // #arg
+      if ( i >= args[1].length ) throw new Error(`Requesting ${arg} but only got ${args[1].length} arguments.`) ;
+      const subtree = args[1][i] // arg
+      return t( subtree , match , { args: args[0] , variables } ) ;
+    } ,
+
+  } ,
+
+  "endif": {
+
+    "elsefi" : ( tree , match , ctx ) => {
+      const [ _else , blocks , _fi ] = tree.children ;
+      return {
+	"type" : "node" ,
+	"nonterminal" : "endif" ,
+	"production" : "fi" ,
+	"children" : chain([ [ _else ] , m( [ blocks ] , match , ctx ) , [ _fi ] ] ) ,
+      } ;
+    } ,
+
+    "fi" : ( ) => ({
+      "type" : "leaf" ,
+      "terminal" : "text" ,
+      "buffer" : '\\fi' ,
+    }) ,
+
+  } ,
+
+  "cmddef" : {
+
+    "{cmd}[x]{blocks}": ( tree , _ , { variables } ) => {
+      const [ _0 , othercmd , _1 , cmddefargs , _2 , blocks , _3 ] = tree.children ;
+      const cmd = othercmd.buffer;
+      let nargs = 0;
+      if (cmddefargs.production === 'yes') {
+	const [ _4 , text , _5 ] = cmddefargs.children ;
+	nargs = parseInt(text.buffer, 10);
+      }
+      variables.set(cmd, [ nargs , blocks ]);
+      return empty;
+    } ,
+
+    "cmd[x]{blocks}": ( tree , _ , { variables } ) => {
+      const [ othercmd , cmddefargs , _2 , blocks , _3 ] = tree.children ;
+      const cmd = othercmd.buffer;
+      let nargs = 0;
+      if (cmddefargs.production === 'yes') {
+	const [ _4 , text , _5 ] = cmddefargs.children ;
+	nargs = parseInt(text.buffer, 10);
+      }
+      variables.set(cmd, [ nargs , blocks ]);
+      return empty;
+    } ,
+
+    "*cmd[x]{blocks}": ( tree , _ , { variables } ) => {
+      // do not know what to do with '*' at the moment
+      const [ _1 , othercmd , cmddefargs , _2 , blocks , _3 ] = tree.children ;
+      const cmd = othercmd.buffer;
+      let nargs = 0;
+      if (cmddefargs.production === 'yes') {
+	const [ _4 , text , _5 ] = cmddefargs.children ;
+	nargs = parseInt(text.buffer, 10);
+      }
+      variables.set(cmd, [ nargs , blocks ]);
+      return empty;
+    } ,
+
+  } ,
+
+  "cmddefargs": {
+    "yes" : err( "cmddefargs" , "yes" ) ,
+    "no" : err( "cmddefargs" , "no" ) ,
+  } ,
+
+  "cmd*": {
+    "yes" : err( "cmd*" , "yes" ) ,
+    "no" : err( "cmd*" , "no" ) ,
+  } ,
+
+  "cmdoptargs": {
+    "yes" : ( tree , match , ctx ) => shake['block']['[blocks]']( tree , match , ctx ),
+    "no" : () => empty ,
+  } ,
+
+  "cmdargs": {
+    "add" : ( tree , match , ctx ) => {
+      const [ _open , blocks , _close , tail ] = tree.children ;
+      return {
+	"type" : "node" ,
+	"nonterminal" : "block" ,
+	"production" : "{blocks}" ,
+	"children" : chain( [ [ _open ] , m( [ blocks ] , match , ctx ) , [ _close ] , m( [ tail ] , match , ctx ) ] ) ,
+      } ;
+    } ,
+    "end" : () => empty ,
+  } ,
+
+} ;

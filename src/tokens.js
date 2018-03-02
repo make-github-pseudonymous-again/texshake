@@ -1,4 +1,4 @@
-export function* tokens ( string ) {
+function* _tokens ( string ) {
 
   let i = 0 ;
   let n = string.length ;
@@ -115,4 +115,15 @@ export function* tokens ( string ) {
 
   yield* flush();
 
+}
+
+export function* tokens ( string ) {
+
+  for ( const [ terminal , buffer ] of _tokens(string) ) {
+    yield {
+      'type' : 'leaf' ,
+      terminal ,
+      buffer ,
+    }
+  }
 }

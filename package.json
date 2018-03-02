@@ -31,18 +31,18 @@
     "url": "https://github.com/aureooms/texshake/issues"
   },
   "dependencies": {
-    "@aureooms/js-grammar": "^2.0.0",
+    "@aureooms/js-grammar": "^4.0.0",
     "@aureooms/js-itertools": "^3.4.0",
     "@aureooms/js-stream": "^0.0.2",
     "babel-polyfill": "^6.26.0"
   },
   "devDependencies": {
-    "ava": "^0.24.0",
+    "ava": "^0.25.0",
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.6.1",
     "codeclimate-test-reporter": "^0.5.0",
     "coveralls": "^3.0.0",
-    "np": "^2.18.3",
+    "np": "^2.20.1",
     "nyc": "^11.4.1"
   },
   "homepage": "https://github.com/aureooms/texshake#readme",

@@ -1,16 +1,20 @@
 import { iter , list , map } from '@aureooms/js-itertools' ;
-import { ll1 } from '@aureooms/js-grammar' ;
+import { ll1 , ast } from '@aureooms/js-grammar' ;
 import * as stream from '@aureooms/js-stream' ;
 import { tokens } from './tokens' ;
-import { grammar } from './grammar' ;
-import { decorate } from './decorate' ;
+import { G } from './grammar' ;
 import { shake } from './shake' ;
 
 export function shakestring ( string , out ) {
-  const table = ll1.compile(0, grammar);
-  const mytokens = list(tokens(string));
-  const mystream = stream.fromiterable(map(([a,b]) => a, mytokens));
-  const ast = ll1.parse(0, grammar, table, mystream).children[0];
-  decorate(iter(mytokens), ast);
-  shake(out, ast, new Map(), []);
+
+  const parser = ll1.from(G);
+  const mystream = stream.fromiterable(tokens(string));
+  let tree = parser.parse(mystream) ;
+  tree = ast.materialize( tree ) ;
+
+  const ctx = { args : [ ] , variables : new Map() } ;
+  const transformed = ast.transform( tree , shake , ctx ) ;
+
+  for ( const leaf of ast.flatten( transformed ) ) out.write(leaf.buffer) ;
+
 }

@@ -1,4 +1,3 @@
-export * from './decorate' ;
 export * from './dumptree' ;
 export * from './grammar' ;
 export * from './match' ;
