@@ -43,7 +43,7 @@
     "codeclimate-test-reporter": "^0.5.0",
     "coveralls": "^3.0.0",
     "np": "^2.20.1",
-    "nyc": "^11.4.1"
+    "nyc": "^11.6.0"
   },
   "homepage": "https://github.com/aureooms/texshake#readme",
   "license": "AGPL-3.0",
