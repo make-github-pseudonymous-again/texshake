@@ -1,6 +1,6 @@
 # texshake
 
-<img src="https://media.licdn.com/mpr/mpr/AAEAAQAAAAAAAAgjAAAAJDQ1MTAyMTRiLTgxNWMtNDhmNy04ZDZkLWZiZjUzZGYwMGQxYQ.png" width="864">
+<img src="http://scribblesinstitute.com/wp-content/uploads/2015/05/NatTree04.jpg" width="864">
 
 	$ echo '\\newif\\ifah\\ahtrue\\ifah ah \\else oh \\fi' | texshake
 	 ah
