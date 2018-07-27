@@ -39,11 +39,11 @@
   "devDependencies": {
     "ava": "^0.25.0",
     "babel-cli": "^6.26.0",
-    "babel-preset-env": "^1.6.1",
+    "babel-preset-env": "^1.7.0",
     "codeclimate-test-reporter": "^0.5.0",
-    "coveralls": "^3.0.0",
-    "np": "^2.20.1",
-    "nyc": "^11.6.0"
+    "coveralls": "^3.0.2",
+    "np": "^3.0.4",
+    "nyc": "^12.0.2"
   },
   "homepage": "https://github.com/aureooms/texshake#readme",
   "license": "AGPL-3.0",
