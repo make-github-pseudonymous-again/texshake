@@ -45,6 +45,9 @@
     "np": "^3.0.4",
     "nyc": "^12.0.2"
   },
+  "files": [
+    "lib"
+  ],
   "homepage": "https://github.com/aureooms/texshake#readme",
   "license": "AGPL-3.0",
   "main": "lib/index.js",
