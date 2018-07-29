@@ -9,8 +9,7 @@ export function shakestring ( string , out ) {
 
   const parser = ll1.from(G);
   const mystream = stream.fromiterable(tokens(string));
-  let tree = parser.parse(mystream) ;
-  tree = ast.materialize( tree ) ;
+  const tree = parser.parse(mystream) ;
 
   const ctx = { args : [ ] , variables : new Map() } ;
   const transformed = ast.transform( tree , shake , ctx ) ;

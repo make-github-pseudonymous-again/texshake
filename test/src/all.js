@@ -140,3 +140,11 @@ test( throws , '\\newcommand\\test[2]{#1-#2-#3}\\test{a}{b}', /only got 2 argume
 test( throws , '\\newcommand\\test[{}]{x}', /1:18/) ;
 test( throws , ' \\newcommand\\test[{}]{x}', /1:19/) ;
 test( throws , '\n\\newcommand\\test[{}]{x}', /2:18/) ;
+
+// a very long empty document (breaks recursive approaches)
+// needs a fix in @aureooms/js-grammar
+// for the moment we will not parse spaces and tabs
+// this should be enough to allow for documents
+// of a few thousand lines
+const spaces = (new Array(10002)).join(' ') ;
+test( immutable , spaces ) ;

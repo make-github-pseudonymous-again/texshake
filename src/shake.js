@@ -1,4 +1,4 @@
-import { chain } from '@aureooms/js-itertools' ;
+import { iter , next , list , chain } from '@aureooms/js-itertools' ;
 import { ast } from '@aureooms/js-grammar' ;
 
 const empty = {
@@ -19,7 +19,7 @@ const recurse = ( nonterminal , production ) => ( tree , match , ctx ) => ({
   "type" : "node" ,
   nonterminal ,
   production ,
-  "children" : m( tree.children , match , ctx ) ,
+  "children" : ast.cmap( x => x.type === 'leaf' ? x : t( x , match , ctx ) , tree.children ) ,
 }) ;
 
 
@@ -45,42 +45,33 @@ export const shake = {
   } ,
 
   "group" : {
-    "group" : ( tree , match , ctx ) => {
-      const [ _open , anything , _close ] = tree.children ;
-      return {
-	"type" : "node" ,
-	"nonterminal" : "group" ,
-	"production" : "group" ,
-	"children" : chain( [ [ _open ] , m( [ anything ] , match , ctx ) , [ _close ] ] ) ,
-      } ;
-    } ,
+    "group" : recurse('group', 'group') ,
   } ,
 
   "optgroup" : {
-    "group" : ( tree , match , ctx ) => {
-      const [ _open , anything , _close ] = tree.children ;
-      return {
-	"type" : "node" ,
-	"nonterminal" : "optgroup" ,
-	"production" : "group" ,
-	"children" : chain( [ [ _open ] , m( [ anything ] , match , ctx ) , [ _close ] ] ) ,
-      } ;
-    } ,
+    "group" : recurse('optgroup', 'group') ,
   } ,
 
   "othercmd" : {
 
     "othercmd": ( tree , match , ctx ) => {
-      const [ othercmd , optstar , args ] = tree.children ;
+
+      const it = iter(tree.children) ;
+
+      const othercmd = next(it) ;
       let cmd = othercmd.buffer;
+
+      const optstar = ast.materialize(next(it));
       if ( optstar.production === 'yes' ) cmd += '*';
+
+      const args = ast.materialize(next(it));
       const cmdargs = [];
       let arg_i = args
       while ( arg_i.production === 'normal' ) {
-	const [ group , argstail ] = arg_i.children ;
+	const [ group , tail ] = arg_i.children ;
 	const [ _open , arg , _close ] = group.children ;
 	cmdargs.push(arg) ;
-	arg_i = argstail ;
+	arg_i = tail ;
       }
       const hasoptargs = arg_i.production === 'optional' ;
       if (!hasoptargs && ctx.variables.has(cmd)) {
@@ -119,24 +110,30 @@ export const shake = {
 
     "ifcmd": ( tree , match , ctx ) => {
 
-      const [ ifcmd , block1 , endif ] = tree.children ;
+      const it = iter(tree.children) ;
+
+      const ifcmd = next(it) ; // \if...
       const variable = ifcmd.buffer.substr(3);
 
       if (ctx.variables.has(variable)) {
 	const flag = ctx.variables.get(variable);
+	const block1 = next(it) ;
 	if (flag) return t( block1 , match , ctx ) ;
-	else if ( endif.production === "elsefi" ) {
-	  const [ _else , block2 , _fi ] = endif.children ;
-	  return t( block2 , match , ctx ) ;
+	else {
+	  const endif = ast.materialize(next(it)) ;
+	  if ( endif.production === "elsefi" ) {
+	    const [ _else , block2 , _fi ] = endif.children ;
+	    return t( block2 , match , ctx ) ;
+	  }
+	  else return empty ;
 	}
-	else return empty ;
       }
 
       return {
 	'type' : 'node' ,
 	'nonterminal' : 'something-else' ,
 	'production' : 'ifcmd' ,
-	'children' : chain( [ [ ifcmd ] , m( [block1, endif] , match , ctx ) ] ) ,
+	'children' : chain( [ [ ifcmd ] , m( it , match , ctx ) ] ) ,
       } ;
 
     } ,
@@ -164,9 +161,15 @@ export const shake = {
     }) ,
 
     "def": ( tree , match , { variables } ) => {
-      const [ def , othercmd , _2 , anything , _3 ] = tree.children ;
-      const cmd = othercmd.buffer;
-      variables.set(cmd, [0, ast.materialize(anything)]);
+      const it = iter(tree.children) ;
+      next(it) ; // \def
+      const othercmd = next(it);
+      const cmd = othercmd.buffer ;
+      next(it) ; // {
+      const anything = next(it) ;
+      const blob = ast.materialize(anything) ;
+      variables.set(cmd, [0, blob]);
+      next(it) ; // }
       return empty ;
     } ,
 
@@ -175,8 +178,6 @@ export const shake = {
       return t( cmddef , match , ctx ) ;
     } ,
 
-    " " : tree => tree ,
-    "\t" : tree => tree ,
     "\n" : tree => tree ,
 
     "arg": ( tree , match , { args , variables } ) => {
@@ -190,80 +191,82 @@ export const shake = {
 
     "$" : tree => tree ,
 
-    "math" : ( tree , match , ctx ) => {
-      const [ _open , anything , _close ] = tree.children ;
-      return {
-	"type" : "node" ,
-	"nonterminal" : 'something-else' ,
-	"production" : "math" ,
-	"children" : chain( [ [ _open ] , m( [ anything ] , match , ctx ) , [ _close ] ] ) ,
-      } ;
-    } ,
-
-    "mathenv" : ( tree , match , ctx ) => {
-      const [ _open , anything , _close ] = tree.children ;
-      return {
-	"type" : "node" ,
-	"nonterminal" : 'something-else' ,
-	"production" : "mathenv" ,
-	"children" : chain( [ [ _open ] , m( [ anything ] , match , ctx ) , [ _close ] ] ) ,
-      } ;
-    } ,
+    "math" : recurse('something-else', 'math') ,
+    "mathenv" : recurse('something-else', 'mathenv') ,
 
   } ,
 
   "endif": {
-
-    "elsefi" : ( tree , match , ctx ) => {
-      const [ _else , anything , _fi ] = tree.children ;
-      return {
-	"type" : "node" ,
-	"nonterminal" : "endif" ,
-	"production" : "elsefi" ,
-	"children" : chain([ [ _else ] , m( [ anything ] , match , ctx ) , [ _fi ] ] ) ,
-      } ;
-    } ,
-
+    "elsefi" : recurse( 'endif', 'elsefi' ) ,
     "fi" : tree => tree ,
-
   } ,
 
   "cmddef" : {
 
     "{cmd}[x]{anything}": ( tree , _ , { variables } ) => {
-      const [ _0 , othercmd , _1 , cmddefargs , _2 , anything , _3 ] = tree.children ;
+      const it = iter(tree.children) ;
+      next(it); // {
+      const othercmd = next(it);
       const cmd = othercmd.buffer;
+      next(it); // }
+      const cmddefargs = next(it);
       let nargs = 0;
       if (cmddefargs.production === 'yes') {
-	const [ _4 , text , _5 ] = cmddefargs.children ;
+	const it2 = iter(cmddefargs.children);
+	next(it2) ; // [
+	const text = next(it2) ;
 	nargs = parseInt(text.buffer, 10);
+	next(it2) ; // ]
       }
-      variables.set(cmd, [ nargs , anything ]);
+      next(it); // {
+      const anything = next(it);
+      const blob = ast.materialize(anything) ;
+      variables.set(cmd, [ nargs , blob ]);
+      next(it); // }
       return empty;
     } ,
 
     "cmd[x]{anything}": ( tree , _ , { variables } ) => {
-      const [ othercmd , cmddefargs , _2 , anything , _3 ] = tree.children ;
+      const it = iter(tree.children) ;
+      const othercmd = next(it);
       const cmd = othercmd.buffer;
+      const cmddefargs = next(it);
       let nargs = 0;
       if (cmddefargs.production === 'yes') {
-	const [ _4 , text , _5 ] = cmddefargs.children ;
+	const it2 = iter(cmddefargs.children);
+	next(it2) ; // [
+	const text = next(it2) ;
 	nargs = parseInt(text.buffer, 10);
+	next(it2) ; // ]
       }
-      variables.set(cmd, [ nargs , anything ]);
+      next(it); // {
+      const anything = next(it);
+      const blob = ast.materialize(anything) ;
+      variables.set(cmd, [ nargs , blob ]);
+      next(it); // }
       return empty;
     } ,
 
     "*cmd[x]{anything}": ( tree , _ , { variables } ) => {
       // do not know what to do with '*' at the moment
-      const [ _1 , othercmd , cmddefargs , _2 , anything , _3 ] = tree.children ;
+      const it = iter(tree.children) ;
+      next(it); // *
+      const othercmd = next(it);
       const cmd = othercmd.buffer;
+      const cmddefargs = next(it);
       let nargs = 0;
       if (cmddefargs.production === 'yes') {
-	const [ _4 , text , _5 ] = cmddefargs.children ;
+	const it2 = iter(cmddefargs.children);
+	next(it2) ; // [
+	const text = next(it2) ;
 	nargs = parseInt(text.buffer, 10);
+	next(it2) ; // ]
       }
-      variables.set(cmd, [ nargs , anything ]);
+      next(it); // {
+      const anything = next(it);
+      const blob = ast.materialize(anything) ;
+      variables.set(cmd, [ nargs , blob ]);
+      next(it); // }
       return empty;
     } ,
 

@@ -125,18 +125,6 @@ function* _tokens ( string ) {
       ++position;
       ++i;
     }
-    else if ( c === ' ' ) {
-      yield* flush();
-      yield [ ' ' , ' ' , new Position(line, position) ] ;
-      ++position;
-      ++i;
-    }
-    else if ( c === '\t' ) {
-      yield* flush();
-      yield [ '\t' , '\t' , new Position(line, position) ] ;
-      ++position;
-      ++i;
-    }
     else if ( c === '\n' ) {
       yield* flush();
       yield [ '\n' , '\n' , new Position(line, position) ] ;

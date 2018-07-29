@@ -47,9 +47,7 @@ const productions = {
     "comment" : [ '=comment' ] , // 1.5
     "def" : [ '=def' , '=othercmd' , '={' , "&anything" , '=}' ] , // 1.7
     "newcommand" : [ '=newcommand' , "&cmddef" ] , // 1.8
-    " " : [ '= ' ] ,
     "\n" : [ '=\n' ] ,
-    "\t" : [ '=\t' ] ,
     "arg" : [ '=arg' ] , // 1.12
     "$" : [ '=$' ] ,
     "math" : [ '=\\(' , '&anything' , '=\\)' ] ,
