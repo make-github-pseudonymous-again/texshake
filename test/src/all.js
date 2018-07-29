@@ -16,7 +16,9 @@ function throws ( t , string , expected ) {
 	t.throws(() => shakestring(string, out), expected);
 }
 
-transform.title = ( _ , string , expected ) => `shakestring('${string}') === '${expected}'`
+transform.title = ( _ , string , expected ) => `shakestring('${string}') === '${expected}'` ;
+
+throws.title = ( _ , string , expected ) => `throws('${string}') ~ '${expected}'` ;
 
 const immutable = ( t , string ) => transform( t , string , string ) ;
 
