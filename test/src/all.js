@@ -37,7 +37,8 @@ test( immutable , 'Lorem ipsum dolor\nsit amet.' ) ;
 test( immutable , '\\usepackage{microtype}' ) ;
 
 // undefined ifcmd
-test( immutable , '\\ifnum\\mynum>6 x \\else y \\fi' ) ;
+test( immutable , ' \\ifnum\\mynum>6 x \\fi ' ) ;
+test( immutable , ' \\ifnum\\mynum>6 x \\else y \\fi ' ) ;
 
 // Stars in some text
 test( immutable , '*Lorem * ipsum* dolor sit $a*$ \\(m*e^*t_*\\)*' ) ;
