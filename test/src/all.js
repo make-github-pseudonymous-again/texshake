@@ -122,7 +122,7 @@ test( immutable , '\\#x' ) ;
 test( immutable , '\\#1' ) ;
 
 // simple command call with *
-test( immutable , '\paragraph*{Testing}' ) ;
+test( immutable , '\\paragraph*{Testing}' ) ;
 
 // nonmatching curly brackets
 test( throws , '{' , /unexpected end of file/ ) ;
