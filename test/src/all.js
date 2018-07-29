@@ -1,6 +1,8 @@
 import test from 'ava' ;
 
-import { shakestring } from '../../src' ;
+import { ll1 } from '@aureooms/js-grammar' ;
+
+import { G , shakestring } from '../../src' ;
 
 function transform ( t , string , expected ) {
 	let output = '' ;
@@ -14,6 +16,9 @@ transform.title = ( _ , string , expected ) => `shakestring('${string}') === '${
 const immutable = ( t , string ) => transform( t , string , string ) ;
 
 immutable.title = ( _ , string ) => transform.title( _ , string , string ) ;
+
+// Grammar should be LL1
+test( 'Grammar is LL1' , t => t.true(ll1.is(G)) ) ;
 
 // the empty document
 test( immutable , '' ) ;
@@ -67,3 +72,19 @@ test( transform , '% Lorem ipsum dolor sit amet' , '%' ) ;
 test( transform , 'Hello, world% Lorem ipsum dolor sit amet' , 'Hello, world%' ) ;
 test( transform , 'Hello, world % Lorem ipsum dolor sit amet' , 'Hello, world %' ) ;
 test( transform , '1 % 2 \n 3' , '1 %\n 3' ) ;
+
+
+// non matching brackets in math envs
+test( immutable , '$[0,1)$' ) ;
+test( immutable , '\\([0,1)\\)' ) ;
+test( immutable , '$(0,1]$' ) ;
+test( immutable , '\\((0,1]\\)' ) ;
+
+// nested square brackets (not parsed as nested)
+test( immutable , '\\nestedsquarebrackets[[]]') ;
+
+// complex command call
+test( transform , ' \\newtheorem{lemma}[theorem]{Lemma} % \\begin{Lemma}', ' \\newtheorem{lemma}[theorem]{Lemma} %') ;
+
+// complex math env
+test( immutable , '\\begin{displaymath} S_r^\\ell(n,d) = O\\left( \\log dntr + \\frac{n^d}{t} ( \\log t + \\frac{r}{t^{d-2}} ) + t^{d+1} \\nu(t,d+1) + \\frac{n^d}{t^d} ( \\log \\nu(t,d+1) + t \\log t ) \\right), \\end{displaymath}' ) ;

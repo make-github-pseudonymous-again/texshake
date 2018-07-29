@@ -1,5 +1,12 @@
+import { Position } from './Position' ;
+
+const FIRST_LINE = 1;
+const FIRST_POSITION = 1;
+
 function* _tokens ( string ) {
 
+  let line = FIRST_LINE ;
+  let position = FIRST_POSITION;
   let i = 0 ;
   let n = string.length ;
 
@@ -7,7 +14,8 @@ function* _tokens ( string ) {
 
   const flush = function* () {
     if ( buffer !== '' ) {
-      yield [ 'text' , buffer ] ;
+      yield [ 'text' , buffer , new Position(line, position) ] ;
+      position += buffer.length;
       buffer = '';
     }
   }
@@ -15,11 +23,8 @@ function* _tokens ( string ) {
   while ( i < n ) {
     const c = string[i] ;
     if ( c === '\\' ) {
-
-      // read command
-
-      let cmd = c ;
-      while ( ++i < n ) {
+      let cmd = '\\' ;
+      while ( ++i < n ) { // read command
 	const d = string[i];
 	// http://www.tex.ac.uk/FAQ-whatmacros.html
 	if ( ( d >= 'a' && d <= 'z' ) || ( d >= 'A' && d <= 'Z' ) ) cmd += d;
@@ -34,23 +39,40 @@ function* _tokens ( string ) {
 
       yield* flush();
 
-      if ( cmd.substr(0,3) === '\\if' ) yield [ 'ifcmd' , cmd ] ;
+      let cmdtype = 'othercmd' ;
 
-      else if (cmd.substr(cmd.length-5, 5) === 'false' ) yield [ 'falsecmd' , cmd ] ;
+      if ( cmd.substr(0,3) === '\\if' ) cmdtype = 'ifcmd' ;
 
-      else if (cmd.substr(cmd.length-4, 4) === 'true' ) yield [ 'truecmd' , cmd ] ;
+      else if (cmd.substr(cmd.length-5, 5) === 'false' ) cmdtype = 'falsecmd' ;
 
-      else if ( cmd === '\\newif' )  yield [ 'newif' , cmd ] ;
+      else if (cmd.substr(cmd.length-4, 4) === 'true' ) cmdtype = 'truecmd' ;
 
-      else if ( cmd === '\\else' )  yield [ 'else' , cmd ] ;
+      else if ( cmd === '\\newif' ) cmdtype = 'newif' ;
 
-      else if ( cmd === '\\def' )  yield [ 'def' , cmd ] ;
+      else if ( cmd === '\\else' ) cmdtype = 'else' ;
 
-      else if ( cmd === '\\newcommand' )  yield [ 'newcommand' , cmd ] ;
+      else if ( cmd === '\\def' ) cmdtype = 'def' ;
 
-      else if ( cmd === '\\fi' )  yield [ 'fi' , cmd ] ;
+      else if ( cmd === '\\newcommand' ) cmdtype = 'newcommand' ;
 
-      else yield [ 'othercmd' , cmd ] ;
+      else if ( cmd === '\\fi' ) cmdtype = 'fi' ;
+
+      else if ( cmd === '\\(' ) cmdtype = '\\(' ;
+
+      else if ( cmd === '\\)' ) cmdtype = '\\)' ;
+
+      else if ( cmd === '\\[' ) cmdtype = '\\[' ;
+
+      else if ( cmd === '\\]' ) cmdtype = '\\]' ;
+
+      yield [ cmdtype , cmd , new Position(line, position) ] ;
+      if ( cmd === '\\\n' ) {
+	++line;
+	position = FIRST_POSITION;
+      }
+      else {
+	position += cmd.length;
+      }
 
     }
     else if ( c === '#' ) {
@@ -66,31 +88,62 @@ function* _tokens ( string ) {
 	}
       }
       yield* flush();
-      yield [ 'arg' , arg ]
+      yield [ 'arg' , arg , new Position(line, position) ] ;
+      position += arg.length;
     }
     else if ( c === '{' ) {
       yield* flush();
-      yield [ '{' , '{' ] ;
+      yield [ '{' , '{' , new Position(line, position) ] ;
+      ++position;
       ++i;
     }
     else if ( c === '}' ) {
       yield* flush();
-      yield [ '}' , '}' ] ;
+      yield [ '}' , '}' , new Position(line, position) ] ;
+      ++position;
       ++i;
     }
     else if ( c === '[' ) {
       yield* flush();
-      yield [ '[' , '[' ] ;
+      yield [ '[' , '[' , new Position(line, position) ] ;
+      ++position;
       ++i;
     }
     else if ( c === ']' ) {
       yield* flush();
-      yield [ ']' , ']' ] ;
+      yield [ ']' , ']' , new Position(line, position) ] ;
+      ++position;
       ++i;
     }
     else if ( c === '*' ) {
       yield* flush();
-      yield [ '*' , '*' ] ;
+      yield [ '*' , '*' , new Position(line, position) ] ;
+      ++position;
+      ++i;
+    }
+    else if ( c === '$' ) {
+      yield* flush();
+      yield [ '$' , '$' , new Position(line, position) ] ;
+      ++position;
+      ++i;
+    }
+    else if ( c === ' ' ) {
+      yield* flush();
+      yield [ ' ' , ' ' , new Position(line, position) ] ;
+      ++position;
+      ++i;
+    }
+    else if ( c === '\t' ) {
+      yield* flush();
+      yield [ '\t' , '\t' , new Position(line, position) ] ;
+      ++position;
+      ++i;
+    }
+    else if ( c === '\n' ) {
+      yield* flush();
+      yield [ '\n' , '\n' , new Position(line, position) ] ;
+      ++line;
+      position = FIRST_POSITION;
       ++i;
     }
     else if ( c === '%') {
@@ -102,9 +155,14 @@ function* _tokens ( string ) {
 	if ( d === '\n' ) break ;
 	buffer += d ;
       }
-      yield [ 'comment' , buffer ] ;
-      if ( i < n ) buffer = d;
-      else buffer = '';
+      yield [ 'comment' , buffer , new Position(line, position) ] ;
+      position += buffer.length;
+      buffer = '';
+      if ( i < n ) {
+	yield [ '\n' , '\n' , new Position(line, position) ] ;
+	++line;
+        position = FIRST_POSITION;
+      }
       ++i;
     }
     else {
@@ -119,11 +177,12 @@ function* _tokens ( string ) {
 
 export function* tokens ( string ) {
 
-  for ( const [ terminal , buffer ] of _tokens(string) ) {
+  for ( const [ terminal , buffer , position ] of _tokens(string) ) {
     yield {
       'type' : 'leaf' ,
       terminal ,
       buffer ,
+      position ,
     }
   }
 }

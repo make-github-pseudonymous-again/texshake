@@ -1,35 +1,68 @@
 import { grammar } from '@aureooms/js-grammar' ;
 
-const start = "blocks" ;
-const eof = "$" ;
+const start = "anything" ;
+const eof = "%" ;
 const productions = {
-  "blocks" : { // blocks : 0
-    "add" : [ "&block" , "&blocks" ] , // 0.0
+  "anything" : {
+    "starts-with-othercmd" : [ '&othercmd' , "&cmdafter" ] ,
+    "starts-with-*" : [ '&*' , "&anything" ] ,
+    "starts-with-[" : [ '&[' , "&anything" ] ,
+    "starts-with-]" : [ '&]' , "&anything" ] ,
+    "starts-with-a-group" : [ '&group' , '&anything' ] ,
+    "starts-with-something-else" : [ "&something-else" , "&anything" ] ,
     "end" : [ ] , // 0.1
   } ,
-  "block" : { // block : 1
+  "anything-but-]" : {
+    "starts-with-othercmd" : [ '&othercmd' , "&cmdafter-but-not-]" ] ,
+    "starts-with-*" : [ '&*' , "&anything-but-]" ] ,
+    "starts-with-[" : [ '&[' , "&anything-but-]" ] ,
+    "starts-with-a-group" : [ '&group' , '&anything-but-]' ] ,
+    "starts-with-something-else" : [ "&something-else" , "&anything-but-]" ] ,
+    "end" : [ ] ,
+  } ,
+  "group" : {
+    "group" : [ '={' , '&anything' , '=}' ] ,
+  } ,
+  "optgroup" : {
+    "group" : [ '=[' , "&anything-but-]" , '=]' ] ,
+  } ,
+  "othercmd" : {
+    "othercmd" : [ '=othercmd' , "&cmd*" , "&cmdargs" ] ,
+  },
+  "*" : {
+    "*" : [ '=*' ] ,
+  } ,
+  "[" : {
+    "[" : [ '=[' ] ,
+  } ,
+  "]" : {
+    "]" : [ '=]' ] ,
+  } ,
+  "something-else" : {
     "text" : [ '=text' ] , // 1.0
     "newif" : [ '=newif' , '=ifcmd' ] , // 1.1
-    "ifcmd" : [ '=ifcmd' , "&blocks" , "&endif" ] , // 1.2
+    "ifcmd" : [ '=ifcmd' , "&anything" , "&endif" ] , // 1.2
     "falsecmd" : [ '=falsecmd' ] , // 1.3
     "truecmd" : [ '=truecmd' ] , // 1.4
     "comment" : [ '=comment' ] , // 1.5
-    "othercmd" : [ '=othercmd' , "&cmd*" , "&cmdoptargs" , "&cmdargs" ] , // 1.6
-    "def" : [ '=def' , '=othercmd' , '={' , "&blocks" , '=}' ] , // 1.7
+    "def" : [ '=def' , '=othercmd' , '={' , "&anything" , '=}' ] , // 1.7
     "newcommand" : [ '=newcommand' , "&cmddef" ] , // 1.8
-    "{blocks}" : [ '={' , "&blocks" , '=}' ] , // 1.9
-    "[blocks]" : [ '=[' , "&blocks" , '=]' ] , // 1.10
-    "*" : [ '=*' ] , // 1.11
+    " " : [ '= ' ] ,
+    "\n" : [ '=\n' ] ,
+    "\t" : [ '=\t' ] ,
     "arg" : [ '=arg' ] , // 1.12
+    "$" : [ '=$' ] ,
+    "math" : [ '=\\(' , '&anything' , '=\\)' ] ,
+    "mathenv" : [ '=\\[' , '&anything' , '=\\]' ] ,
   } ,
   "endif" : { // endif : 2
-    "elsefi" : [ '=else' , "&blocks" , '=fi' ] , // 2.0
+    "elsefi" : [ '=else' , "&anything" , '=fi' ] , // 2.0
     "fi" : [ '=fi' ] , // 2.1
   } ,
   "cmddef" : { // command definition 3
-    "{cmd}[x]{blocks}" : [ '={' , '=othercmd' , '=}' , "&cmddefargs" , '={' , "&blocks" , '=}' ] , // 3.0
-    "cmd[x]{blocks}" : [ '=othercmd' , "&cmddefargs" , '={' , "&blocks" , '=}' ] , // 3.1
-    "*cmd[x]{blocks}" : [ '=*' , '=othercmd' , "&cmddefargs" , '={' , "&blocks" , '=}' ] , // 3.2
+    "{cmd}[x]{anything}" : [ '={' , '=othercmd' , '=}' , "&cmddefargs" , '={' , "&anything" , '=}' ] ,
+    "cmd[x]{anything}" : [ '=othercmd' , "&cmddefargs" , '={' , "&anything" , '=}' ] ,
+    "*cmd[x]{anything}" : [ '=*' , '=othercmd' , "&cmddefargs" , '={' , "&anything" , '=}' ] ,
   } ,
   "cmddefargs" : { // command definition arguments 4
     "yes" : [ '=[' , '=text' , '=]' ] , // 4.0
@@ -39,13 +72,21 @@ const productions = {
     "yes" : [ '=*' ] , // 5.0
     "no" : [ ] , // 5.1
   } ,
-  "cmdoptargs" : { // othercmd optional arguments 6
-    "yes" : [ '=[' , "&blocks" , '=]' ] , // 6.0
-    "no" : [ ] , // 6.1
-  } ,
   "cmdargs" : { // othercmd arguments : 7
-    "add" : [ '={' , "&blocks" , '=}' , "&cmdargs" ] , // 7.0
+    "normal" : [ "&group" , "&cmdargs" ] ,
+    "optional" : [ "&optgroup" , "&cmdargs" ] ,
     "end" : [ ] , // 7.1
+  } ,
+  "cmdafter" : { // after othercmd
+    "othercmd" : [ "&othercmd" , "&cmdafter" ] ,
+    "]-then-anything" : [ "&]" , "&anything" ] ,
+    "something-else-then-anything" : [ "&something-else" , "&anything" ] ,
+    "nothing" : [ ] ,
+  } ,
+  "cmdafter-but-not-]" : { // after othercmd
+    "othercmd" : [ "&othercmd" , "&cmdafter-but-not-]" ] ,
+    "something-else-then-anything" : [ "&something-else" , "&anything-but-]" ] ,
+    "nothing" : [ ] ,
   } ,
 } ;
 
