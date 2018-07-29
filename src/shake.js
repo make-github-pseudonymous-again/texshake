@@ -181,6 +181,7 @@ export const shake = {
 
     "arg": ( tree , match , { args , variables } ) => {
       const [ arg ] = tree.children ;
+      if ( args.length < 2 ) throw new Error(`Requesting ${arg} but got no arguments in context.`) ;
       const i = parseInt(arg.buffer.substr(1), 10) - 1; // #arg
       if ( i >= args[1].length ) throw new Error(`Requesting ${arg} but only got ${args[1].length} arguments.`) ;
       const subtree = args[1][i] ; // arg
@@ -223,11 +224,7 @@ export const shake = {
       } ;
     } ,
 
-    "fi" : ( ) => ({ // tree => tree ?
-      "type" : "leaf" ,
-      "terminal" : "text" ,
-      "buffer" : '\\fi' ,
-    }) ,
+    "fi" : tree => tree ,
 
   } ,
 

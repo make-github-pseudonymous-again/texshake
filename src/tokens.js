@@ -76,18 +76,16 @@ function* _tokens ( string ) {
 
     }
     else if ( c === '#' ) {
+      yield* flush();
 
       // read arg number
       let arg = '#' ;
       while ( ++i < n ) {
 	const d = string[i];
 	if ( d >= '0' && d <= '9' ) arg += d;
-	else {
-	  if ( arg === '#' ) throw new Error('Incomplete #') ;
-	  break;
-	}
+	else break;
       }
-      yield* flush();
+      if ( arg === '#' ) throw new Error('Incomplete #') ;
       yield [ 'arg' , arg , new Position(line, position) ] ;
       position += arg.length;
     }

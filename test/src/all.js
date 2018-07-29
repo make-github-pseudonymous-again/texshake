@@ -11,6 +11,11 @@ function transform ( t , string , expected ) {
 	t.is(output, expected);
 }
 
+function throws ( t , string , expected ) {
+	const out = { 'write' : buffer => undefined } ;
+	t.throws(() => shakestring(string, out), expected);
+}
+
 transform.title = ( _ , string , expected ) => `shakestring('${string}') === '${expected}'`
 
 const immutable = ( t , string ) => transform( t , string , string ) ;
@@ -59,12 +64,20 @@ test( transform , '\\abcfalse\\ifabc\\def\\xyz{A cat.}\\else\\def\\xyz{A dog.}\\
 // def and undefined
 test( transform , '\\def\\affil{496}\\author[\\affil]{John Doe}' , '\\author[496]{John Doe}') ;
 
+// newcommand single and no argument
+test( transform , '\\newcommand\\aaa[1]{a#1}\\newcommand\\bbb{\\aaa{bc}}\\bbb', 'abc') ;
+test( transform , '\\newcommand*\\aaa[1]{a#1}\\newcommand*\\bbb{\\aaa{bc}}\\bbb', 'abc') ;
+test( transform , '\\newcommand{\\aaa}[1]{a#1}\\newcommand{\\bbb}{\\aaa{bc}}\\bbb', 'abc') ;
+
 // newcommand single argument
 test( transform , '\\newcommand\\aaa[1]{a#1}\\newcommand\\bbb[1]{\\aaa{b#1}}\\bbb{c}', 'abc') ;
 test( transform , '\\newcommand*\\aaa[1]{a#1}\\newcommand*\\bbb[1]{\\aaa{b#1}}\\bbb{c}', 'abc') ;
+test( transform , '\\newcommand{\\aaa}[1]{a#1}\\newcommand{\\bbb}[1]{\\aaa{b#1}}\\bbb{c}', 'abc') ;
 
 // newcommand two arguments
 test( transform , '\\newcommand\\swap[2]{#2#1}\\swap{a}{b}', 'ba') ;
+test( transform , '\\newcommand*\\swap[2]{#2#1}\\swap{a}{b}', 'ba') ;
+test( transform , '\\newcommand{\\swap}[2]{#2#1}\\swap{a}{b}', 'ba') ;
 
 
 // comment
@@ -88,3 +101,40 @@ test( transform , ' \\newtheorem{lemma}[theorem]{Lemma} % \\begin{Lemma}', ' \\n
 
 // complex math env
 test( immutable , '\\begin{displaymath} S_r^\\ell(n,d) = O\\left( \\log dntr + \\frac{n^d}{t} ( \\log t + \\frac{r}{t^{d-2}} ) + t^{d+1} \\nu(t,d+1) + \\frac{n^d}{t^d} ( \\log \\nu(t,d+1) + t \\log t ) \\right), \\end{displaymath}' ) ;
+
+test( immutable , '\\[ S_r^\\ell(n,d) = O\\left( \\log dntr + \\frac{n^d}{t} ( \\log t + \\frac{r}{t^{d-2}} ) + t^{d+1} \\nu(t,d+1) + \\frac{n^d}{t^d} ( \\log \\nu(t,d+1) + t \\log t ) \\right), \\]' ) ;
+
+test( immutable , '\\begin{displaymath}\n\t\\begin{vmatrix}\n\t\t1 & x_p & y_p \\\\\n\t\t1 & x_q & y_q \\\\\n\t\t1 & x_r & y_r\n\t\\end{vmatrix}.\n\\end{displaymath}' ) ;
+
+// escaped newline
+test( immutable , 'a\\\nb' ) ;
+
+// incomplete arg number
+test( throws , '#' , /Incomplete #/ ) ;
+test( throws , '#x' , /Incomplete #/ ) ;
+
+// no arguments defined
+test( throws , '#1' , /no arguments in context/ ) ;
+
+// escaped #
+test( immutable , '\\#' ) ;
+test( immutable , '\\#x' ) ;
+test( immutable , '\\#1' ) ;
+
+// simple command call with *
+test( immutable , '\paragraph*{Testing}' ) ;
+
+// nonmatching curly brackets
+test( throws , '{' , /unexpected end of file/ ) ;
+
+// newcommand two arguments but one missing from call
+test( throws , '\\newcommand\\test[2]{#1-#2}\\test{a}', /is defined with 2 arguments but 1 were given/) ;
+test( throws , '\\newcommand\\test[2]{#1-#2}\\test{a}{b}{c}', /is defined with 2 arguments but 3 were given/) ;
+
+// newcommand two arguments but one missing from definition
+test( throws , '\\newcommand\\test[2]{#1-#2-#3}\\test{a}{b}', /only got 2 arguments/) ;
+
+// errors at specific positions
+test( throws , '\\newcommand\\test[{}]{x}', /1:18/) ;
+test( throws , ' \\newcommand\\test[{}]{x}', /1:19/) ;
+test( throws , '\n\\newcommand\\test[{}]{x}', /2:18/) ;
