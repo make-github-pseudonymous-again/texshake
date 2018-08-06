@@ -16,13 +16,13 @@ function throws ( t , string , expected ) {
 	t.throws(() => shakestring(string, out), expected);
 }
 
-transform.title = ( _ , string , expected ) => `shakestring('${string}') === '${expected}'` ;
+transform.title = ( title , string , expected ) => title || `shakestring('${string}') === '${expected}'` ;
 
 throws.title = ( _ , string , expected ) => `throws('${string}') ~ '${expected}'` ;
 
 const immutable = ( t , string ) => transform( t , string , string ) ;
 
-immutable.title = ( _ , string ) => transform.title( _ , string , string ) ;
+immutable.title = ( title , string ) => transform.title( title , string , string ) ;
 
 // Grammar should be LL1
 test( 'Grammar is LL1' , t => t.true(ll1.is(G)) ) ;
@@ -147,5 +147,8 @@ test( throws , '\n\\newcommand\\test[{}]{x}', /2:18/) ;
 // for the moment we will not parse spaces and tabs
 // this should be enough to allow for documents
 // of a few thousand lines
-const spaces = (new Array(10002)).join(' ') ;
-test( immutable , spaces ) ;
+const spaces = (new Array(100000)).join(' ') ;
+test( 'long sequence of spaces' , immutable , spaces ) ;
+
+const newlines = (new Array(100000)).join('\n') ;
+test( 'long sequence of newlines' , immutable , newlines ) ;
