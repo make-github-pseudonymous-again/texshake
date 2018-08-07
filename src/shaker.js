@@ -1,5 +1,36 @@
-import { iter , next , list , chain } from '@aureooms/js-itertools' ;
+import { StopIteration } from '@aureooms/js-itertools' ;
 import { ast } from '@aureooms/js-grammar' ;
+
+// TODO create library with those
+function iter ( object ) {
+  // maybe we do not even need the second case
+  if ( object[Symbol.asyncIterator] ) return object[Symbol.asyncIterator]() ;
+  else return object[Symbol.iterator]() ;
+}
+
+// TODO create library with those
+async function next ( iterator , dflt = undefined ) {
+
+  const x = await iterator.next( ) ;
+
+  if ( x.done ) {
+    if ( dflt === undefined ) throw new StopIteration() ;
+    else return dflt ;
+  }
+
+  return x.value ;
+
+}
+
+async function* chain ( iterables ) {
+
+  for ( const iterable of iterables ) {
+    if ( iterable[Symbol.iterator] ) yield* iterable ;
+    else for await ( const item of iterable ) yield item ;
+  }
+
+}
+
 
 const empty = {
   'type' : 'node' ,
@@ -13,17 +44,17 @@ const err = ( nonterminal , production ) => () => {
 } ;
 
 const t = ast.transform ;
-const m = ( children , match , ctx ) => ast.cmap( child => t( child , match , ctx ) , children ) ;
+const m = ( children , match , ctx ) => ast.cmap( async child => await t( child , match , ctx ) , children ) ;
 
 const recurse = ( nonterminal , production ) => ( tree , match , ctx ) => ({
   "type" : "node" ,
   nonterminal ,
   production ,
-  "children" : ast.cmap( x => x.type === 'leaf' ? x : t( x , match , ctx ) , tree.children ) ,
+  "children" : ast.cmap( async x => x.type === 'leaf' ? x : await t( x , match , ctx ) , tree.children ) ,
 }) ;
 
 
-export const shake = {
+export default {
 
   "anything" : {
     "starts-with-othercmd" : recurse( 'anything' , 'starts-with-othercmd' ) ,
@@ -54,17 +85,17 @@ export const shake = {
 
   "othercmd" : {
 
-    "othercmd": ( tree , match , ctx ) => {
+    "othercmd": async ( tree , match , ctx ) => {
 
       const it = iter(tree.children) ;
 
-      const othercmd = next(it) ;
+      const othercmd = await next(it) ;
       let cmd = othercmd.buffer;
 
-      const optstar = ast.materialize(next(it));
+      const optstar = await ast.materialize(await next(it));
       if ( optstar.production === 'yes' ) cmd += '*';
 
-      const args = ast.materialize(next(it));
+      const args = await ast.materialize(await next(it));
       const cmdargs = [];
       let arg_i = args
       while ( arg_i.production === 'normal' ) {
@@ -108,19 +139,19 @@ export const shake = {
 
     "newif": () => empty ,
 
-    "ifcmd": ( tree , match , ctx ) => {
+    "ifcmd": async ( tree , match , ctx ) => {
 
       const it = iter(tree.children) ;
 
-      const ifcmd = next(it) ; // \if...
+      const ifcmd = await next(it) ; // \if...
       const variable = ifcmd.buffer.substr(3);
 
       if (ctx.variables.has(variable)) {
 	const flag = ctx.variables.get(variable);
-	const block1 = next(it) ;
+	const block1 = await next(it) ;
 	if (flag) return t( block1 , match , ctx ) ;
 	else {
-	  const endif = ast.materialize(next(it)) ;
+	  const endif = await ast.materialize(await next(it)) ;
 	  if ( endif.production === "elsefi" ) {
 	    const [ _else , block2 , _fi ] = endif.children ;
 	    return t( block2 , match , ctx ) ;
@@ -138,16 +169,16 @@ export const shake = {
 
     } ,
 
-    "falsecmd" : ( tree , _ , ctx ) => {
-      const [ falsecmd ] = tree.children ;
+    "falsecmd" : async ( tree , _ , ctx ) => {
+      const falsecmd = await next(iter(tree.children)) ;
       const buffer = falsecmd.buffer;
       const variable = buffer.substring(1, buffer.length-5);
       ctx.variables.set(variable, false);
       return empty;
     } ,
 
-    "truecmd" : ( tree , _ , ctx ) => {
-      const [ truecmd ] = tree.children ;
+    "truecmd" : async ( tree , _ , ctx ) => {
+      const truecmd = await next(iter(tree.children)) ;
       const buffer = truecmd.buffer;
       const variable = buffer.substring(1, buffer.length-4);
       ctx.variables.set(variable, true);
@@ -160,28 +191,30 @@ export const shake = {
       'buffer' : '%' ,
     }) ,
 
-    "def": ( tree , match , { variables } ) => {
+    "def": async ( tree , match , { variables } ) => {
       const it = iter(tree.children) ;
-      next(it) ; // \def
-      const othercmd = next(it);
+      await next(it) ; // \def
+      const othercmd = await next(it);
       const cmd = othercmd.buffer ;
-      next(it) ; // {
-      const anything = next(it) ;
-      const blob = ast.materialize(anything) ;
+      await next(it) ; // {
+      const anything = await next(it) ;
+      const blob = await ast.materialize(anything) ;
       variables.set(cmd, [0, blob]);
-      next(it) ; // }
+      await next(it) ; // }
       return empty ;
     } ,
 
-    "newcommand": ( tree , match , ctx ) => {
-      const [ newcommand , cmddef ] = tree.children ;
+    "newcommand": async ( tree , match , ctx ) => {
+      const it = iter(tree.children) ;
+      await next(it) ; // \newcommand
+      const cmddef = await next(it) ;
       return t( cmddef , match , ctx ) ;
     } ,
 
     "\n" : tree => tree ,
 
-    "arg": ( tree , match , { args , variables } ) => {
-      const [ arg ] = tree.children ;
+    "arg": async ( tree , match , { args , variables } ) => {
+      const arg = await next(iter(tree.children)) ;
       if ( args.length < 2 ) throw new Error(`Requesting ${arg} but got no arguments in context.`) ;
       const i = parseInt(arg.buffer.substr(1), 10) - 1; // #arg
       if ( i >= args[1].length ) throw new Error(`Requesting ${arg} but only got ${args[1].length} arguments.`) ;
@@ -203,70 +236,70 @@ export const shake = {
 
   "cmddef" : {
 
-    "{cmd}[x]{anything}": ( tree , _ , { variables } ) => {
+    "{cmd}[x]{anything}": async ( tree , _ , { variables } ) => {
       const it = iter(tree.children) ;
-      next(it); // {
-      const othercmd = next(it);
+      await next(it); // {
+      const othercmd = await next(it);
       const cmd = othercmd.buffer;
-      next(it); // }
-      const cmddefargs = next(it);
+      await next(it); // }
+      const cmddefargs = await next(it);
       let nargs = 0;
       if (cmddefargs.production === 'yes') {
 	const it2 = iter(cmddefargs.children);
-	next(it2) ; // [
-	const text = next(it2) ;
+	await next(it2) ; // [
+	const text = await next(it2) ;
 	nargs = parseInt(text.buffer, 10);
-	next(it2) ; // ]
+	await next(it2) ; // ]
       }
-      next(it); // {
-      const anything = next(it);
-      const blob = ast.materialize(anything) ;
+      await next(it); // {
+      const anything = await next(it);
+      const blob = await ast.materialize(anything) ;
       variables.set(cmd, [ nargs , blob ]);
-      next(it); // }
+      await next(it); // }
       return empty;
     } ,
 
-    "cmd[x]{anything}": ( tree , _ , { variables } ) => {
+    "cmd[x]{anything}": async ( tree , _ , { variables } ) => {
       const it = iter(tree.children) ;
-      const othercmd = next(it);
+      const othercmd = await next(it);
       const cmd = othercmd.buffer;
-      const cmddefargs = next(it);
+      const cmddefargs = await next(it);
       let nargs = 0;
       if (cmddefargs.production === 'yes') {
 	const it2 = iter(cmddefargs.children);
-	next(it2) ; // [
-	const text = next(it2) ;
+	await next(it2) ; // [
+	const text = await next(it2) ;
 	nargs = parseInt(text.buffer, 10);
-	next(it2) ; // ]
+	await next(it2) ; // ]
       }
-      next(it); // {
-      const anything = next(it);
-      const blob = ast.materialize(anything) ;
+      await next(it); // {
+      const anything = await next(it);
+      const blob = await ast.materialize(anything) ;
       variables.set(cmd, [ nargs , blob ]);
-      next(it); // }
+      await next(it); // }
       return empty;
     } ,
 
-    "*cmd[x]{anything}": ( tree , _ , { variables } ) => {
+    "*cmd[x]{anything}": async ( tree , _ , { variables } ) => {
       // do not know what to do with '*' at the moment
       const it = iter(tree.children) ;
-      next(it); // *
-      const othercmd = next(it);
+      await next(it); // *
+      const othercmd = await next(it);
       const cmd = othercmd.buffer;
-      const cmddefargs = next(it);
+      const cmddefargs = await next(it);
       let nargs = 0;
       if (cmddefargs.production === 'yes') {
 	const it2 = iter(cmddefargs.children);
-	next(it2) ; // [
-	const text = next(it2) ;
+	await next(it2) ; // [
+	const text = await next(it2) ;
 	nargs = parseInt(text.buffer, 10);
-	next(it2) ; // ]
+	await next(it2) ; // ]
       }
-      next(it); // {
-      const anything = next(it);
-      const blob = ast.materialize(anything) ;
+      await next(it); // {
+      const anything = await next(it);
+      const blob = await ast.materialize(anything) ;
       variables.set(cmd, [ nargs , blob ]);
-      next(it); // }
+      await next(it); // }
       return empty;
     } ,
 

@@ -1,14 +1,12 @@
-import { Position } from './Position' ;
+import Position from './Position' ;
 
 const FIRST_LINE = 1;
 const FIRST_POSITION = 1;
 
-function* _tokens ( string ) {
+async function* _tokens ( tape ) {
 
   let line = FIRST_LINE ;
   let position = FIRST_POSITION;
-  let i = 0 ;
-  let n = string.length ;
 
   let buffer = '';
 
@@ -20,19 +18,25 @@ function* _tokens ( string ) {
     }
   }
 
-  while ( i < n ) {
-    const c = string[i] ;
+  while ( true ) {
+
+    const c = await tape.read();
+
+    if ( c === tape.eof ) break ;
+
     if ( c === '\\' ) {
       let cmd = '\\' ;
-      while ( ++i < n ) { // read command
-	const d = string[i];
+      while ( true ) { // read command
+
+	const d = await tape.read();
+
+	if ( d === tape.eof ) break ;
+
 	// http://www.tex.ac.uk/FAQ-whatmacros.html
 	if ( ( d >= 'a' && d <= 'z' ) || ( d >= 'A' && d <= 'Z' ) ) cmd += d;
 	else {
-	  if ( cmd === '\\' ) {
-	    cmd += d;
-	    ++i;
-	  }
+	  if ( cmd === '\\' ) cmd += d;
+	  else tape.unread(d);
 	  break;
 	}
       }
@@ -80,10 +84,14 @@ function* _tokens ( string ) {
 
       // read arg number
       let arg = '#' ;
-      while ( ++i < n ) {
-	const d = string[i];
-	if ( d >= '0' && d <= '9' ) arg += d;
-	else break;
+      while ( true ) {
+	const d = await tape.read();
+	if ( d === tape.eof ) break ;
+	else if ( d >= '0' && d <= '9' ) arg += d;
+	else {
+	  tape.unread(d);
+	  break;
+	}
       }
       if ( arg === '#' ) throw new Error('Incomplete #') ;
       yield [ 'arg' , arg , new Position(line, position) ] ;
@@ -93,67 +101,58 @@ function* _tokens ( string ) {
       yield* flush();
       yield [ '{' , '{' , new Position(line, position) ] ;
       ++position;
-      ++i;
     }
     else if ( c === '}' ) {
       yield* flush();
       yield [ '}' , '}' , new Position(line, position) ] ;
       ++position;
-      ++i;
     }
     else if ( c === '[' ) {
       yield* flush();
       yield [ '[' , '[' , new Position(line, position) ] ;
       ++position;
-      ++i;
     }
     else if ( c === ']' ) {
       yield* flush();
       yield [ ']' , ']' , new Position(line, position) ] ;
       ++position;
-      ++i;
     }
     else if ( c === '*' ) {
       yield* flush();
       yield [ '*' , '*' , new Position(line, position) ] ;
       ++position;
-      ++i;
     }
     else if ( c === '$' ) {
       yield* flush();
       yield [ '$' , '$' , new Position(line, position) ] ;
       ++position;
-      ++i;
     }
     else if ( c === '\n' ) {
       yield* flush();
       yield [ '\n' , '\n' , new Position(line, position) ] ;
       ++line;
       position = FIRST_POSITION;
-      ++i;
     }
     else if ( c === '%') {
       yield* flush();
       buffer = '%';
       let d = '';
-      while ( ++i < n ) {
-	d = string[i];
-	if ( d === '\n' ) break ;
+      while ( true ) {
+	d = await tape.read();
+	if ( d === tape.eof || d === '\n' ) break ;
 	buffer += d ;
       }
       yield [ 'comment' , buffer , new Position(line, position) ] ;
       position += buffer.length;
       buffer = '';
-      if ( i < n ) {
+      if ( d === '\n' ) {
 	yield [ '\n' , '\n' , new Position(line, position) ] ;
 	++line;
         position = FIRST_POSITION;
       }
-      ++i;
     }
     else {
       buffer += c ;
-      ++i;
     }
   }
 
@@ -161,9 +160,9 @@ function* _tokens ( string ) {
 
 }
 
-export function* tokens ( string ) {
+export default async function* tokens ( tape ) {
 
-  for ( const [ terminal , buffer , position ] of _tokens(string) ) {
+  for await ( const [ terminal , buffer , position ] of _tokens(tape) ) {
     yield {
       'type' : 'leaf' ,
       terminal ,

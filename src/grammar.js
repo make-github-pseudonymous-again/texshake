@@ -88,4 +88,4 @@ const productions = {
   } ,
 } ;
 
-export const G = grammar.from( { start , eof , productions } ) ;
+export default grammar.from( { start , eof , productions } ) ;

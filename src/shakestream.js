@@ -1,9 +1,9 @@
 import tape from '@aureooms/js-stream' ;
 import shaketape from './shaketape' ;
 
-export default async function shakestring ( string , outputStream ) {
+export default async function shakestream ( inputStream , outputStream ) {
 
-  const inputCharacterTape = tape.fromString( string ) ;
+  const inputCharacterTape = tape.fromReadStream( inputStream );
 
   await shaketape( inputCharacterTape , outputStream ) ;
 

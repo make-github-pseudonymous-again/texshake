@@ -1,10 +1,17 @@
 #!/usr/bin/env node
 
-import 'babel-polyfill' ;
+import '@babel/polyfill' ;
 
-import { shakestring } from './shakestring' ;
+import fs from 'fs' ;
 
-let content = '';
-process.stdin.resume();
-process.stdin.on('data', buf => { content += buf.toString(); });
-process.stdin.on('end', () => { shakestring(content, process.stdout); });
+import shakestream from './shakestream' ;
+
+// TODO get rid of this workaround
+// process.stdin does not work at the moment (2018-08-07)
+// see https://github.com/nodejs/node/issues/22044#issue-346143983
+// and https://github.com/nodejs/node/issues/20503
+const stdin = fs.createReadStream('/dev/stdin', { encoding : 'utf8'} ) ;
+const stdout = process.stdout ;
+
+shakestream(stdin, stdout)
+  .catch( err => console.error(err) ) ;
