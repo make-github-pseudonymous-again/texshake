@@ -27,9 +27,9 @@
     "url": "https://github.com/aureooms/texshake/issues"
   },
   "dependencies": {
-    "@aureooms/js-grammar": "^6.1.0",
+    "@aureooms/js-grammar": "^6.2.0",
     "@aureooms/js-itertools": "^3.4.0",
-    "@aureooms/js-stream": "^1.0.0",
+    "@aureooms/js-tape": "^4.0.0",
     "@babel/polyfill": "^7.0.0-beta.56"
   },
   "devDependencies": {

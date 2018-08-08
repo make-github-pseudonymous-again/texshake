@@ -1,5 +1,5 @@
 import { ll1 , ast } from '@aureooms/js-grammar' ;
-import tape from '@aureooms/js-stream' ;
+import tape from '@aureooms/js-tape' ;
 
 import tokens from './tokens' ;
 import grammar from './grammar' ;
