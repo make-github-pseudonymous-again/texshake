@@ -1,8 +1,15 @@
 import test from 'ava' ;
+import fs from 'fs' ;
 
-import { ll1 } from '@aureooms/js-grammar' ;
+import {
+	ll1 ,
+} from '@aureooms/js-grammar' ;
 
-import { grammar , shakestring } from '../../src' ;
+import {
+	grammar ,
+	shakestring ,
+	shakestream ,
+} from '../../src' ;
 
 async function transform ( t , string , expected ) {
 	let output = '' ;
@@ -18,11 +25,26 @@ async function throws ( t , string , expected ) {
 
 const immutable = async ( t , string ) => await transform( t , string , string ) ;
 
+async function immutableFile ( t , filepath ) {
+	const encoding = 'utf8' ;
+	const expected = fs.readFileSync(filepath, encoding);
+
+	let output = '' ;
+	const out = { 'write' : buffer => output += buffer } ;
+
+	const readStream = fs.createReadStream( filepath, { encoding } ) ;
+	await shakestream(readStream, out);
+
+	t.is(output, expected);
+}
+
 transform.title = ( title , string , expected ) => title || `shakestring('${string}') === '${expected}'` ;
 
 throws.title = ( _ , string , expected ) => `throws('${string}') ~ '${expected}'` ;
 
 immutable.title = ( title , string ) => transform.title( title , string , string ) ;
+
+immutableFile.title = ( _ , filepath ) => filepath.replace(/\.tex$/, '').replace(/^.*\//, '') ;
 
 // Grammar should be LL1
 test( 'Grammar is LL1' , t => t.true(ll1.is(grammar)) ) ;
@@ -148,3 +170,8 @@ test( 'long sequence of spaces' , immutable , spaces ) ;
 
 const newlines = (new Array(100000)).join('\n') ;
 test( 'long sequence of newlines' , immutable , newlines ) ;
+
+// immutable input files
+const filedir = 'test/data' ;
+const files = fs.readdirSync(filedir) ;
+for ( const filename of files ) test( immutableFile , `${filedir}/${filename}` ) ;
