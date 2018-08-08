@@ -40,7 +40,7 @@ async function immutableFile ( t , filepath ) {
 
 transform.title = ( title , string , expected ) => title || `shakestring('${string}') === '${expected}'` ;
 
-throws.title = ( _ , string , expected ) => `throws('${string}') ~ '${expected}'` ;
+throws.title = ( title , string , expected ) => title || `throws('${string}') ~ '${expected}'` ;
 
 immutable.title = ( title , string ) => transform.title( title , string , string ) ;
 
@@ -162,7 +162,7 @@ test( throws , '\\newcommand\\test[2]{#1-#2-#3}\\test{a}{b}', /only got 2 argume
 // errors at specific positions
 test( throws , '\\newcommand\\test[{}]{x}', /1:18/) ;
 test( throws , ' \\newcommand\\test[{}]{x}', /1:19/) ;
-test( throws , '\n\\newcommand\\test[{}]{x}', /2:18/) ;
+test( 'Wrong argument number format at 2:18 throws' , throws , '\n\\newcommand\\test[{}]{x}', /2:18/) ;
 
 // a very long empty document (breaks recursive approaches)
 const spaces = (new Array(100000)).join(' ') ;
