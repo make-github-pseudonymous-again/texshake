@@ -44,7 +44,7 @@ throws.title = ( title , string , expected ) => title || `throws('${string}') ~ 
 
 immutable.title = ( title , string ) => transform.title( title , string , string ) ;
 
-immutableFile.title = ( _ , filepath ) => filepath.replace(/\.tex$/, '').replace(/^.*\//, '') ;
+immutableFile.title = ( _ , filepath ) => `LaTeX file: ${filepath.replace(/\.tex$/, '').replace(/^.*\//, '')}` ;
 
 // Grammar should be LL1
 test( 'Grammar is LL1' , t => t.true(ll1.is(grammar)) ) ;
