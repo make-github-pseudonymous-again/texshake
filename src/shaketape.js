@@ -14,7 +14,8 @@ export default async function shaketape ( inputTape , outputStream ) {
 
   const ctx = { args : [ ] , variables : new Map() } ;
   const transformed = await ast.transform( tree , shaker , ctx ) ;
+  const flattened = ast.flatten( transformed ) ;
 
-  for await ( const leaf of ast.flatten( transformed ) ) outputStream.write(leaf.buffer) ;
+  for await ( const leaf of flattened ) outputStream.write(leaf.buffer) ;
 
 }
