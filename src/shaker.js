@@ -215,9 +215,9 @@ export default {
 
     "arg": async ( tree , match , { args , variables } ) => {
       const arg = await next(iter(tree.children)) ;
-      if ( args.length < 2 ) throw new Error(`Requesting ${arg} but got no arguments in context.`) ;
+      if ( args.length < 2 ) throw new Error(`Requesting ${arg.buffer} but got no arguments in context.`) ;
       const i = parseInt(arg.buffer.substr(1), 10) - 1; // #arg
-      if ( i >= args[1].length ) throw new Error(`Requesting ${arg} but only got ${args[1].length} arguments.`) ;
+      if ( i >= args[1].length ) throw new Error(`Requesting ${arg.buffer} but only got ${args[1].length} arguments.`) ;
       const subtree = args[1][i] ; // arg
       return t( subtree , match , { args: args[0] , variables } ) ;
     } ,
