@@ -46,23 +46,23 @@ $ texshake < 'my-awesome-latex-file-before.tex' > 'my-awesome-latex-file-after.t
 
 Prunes dead branches for user-defined `\if...` variables.
 
-> `\abctrue\ifabc ah\else oh\fi` -> ` ah`
+> `\abctrue\ifabc ah\else oh\fi` ~ ` ah`
 
 ### `%` comments
 
 Only keeps the first `%` character of each comment.
 
-> `hello, world % Lorem ipsum dolor sit amet` -> `hello, world %`
+> `hello, world % Lorem ipsum dolor sit amet` ~ `hello, world %`
 
 ### `\def` and `\newcommand` user-defined macros
 
 Expands each user-defined macro and removes their definition.
 
-> `\newcommand\swap[2]{#2#1}\swap{a}{b}` -> `ba`
+> `\newcommand\swap[2]{#2#1}\swap{a}{b}` ~ `ba`
 
 ### Altogether now!
 
-> `\myfalse\ifmy\def\xyz{A cat.}\else\def\xyz{A dog.}\fi\xyz% $#@!`, `A dog.%`
+> `\myfalse\ifmy\def\xyz{A cat.}\else\def\xyz{A dog.}\fi\xyz% $#@!` ~ `A dog.%`
 
 
 ## What for?
