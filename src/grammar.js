@@ -1,8 +1,12 @@
 import { grammar } from '@aureooms/js-grammar' ;
 
-const start = "anything" ;
+const root = "document" ;
+const start = "contents" ;
 const eof = "%" ;
 const productions = {
+  "document" : {
+    "contents" : [ "&anything" , "=%" ] ,
+  } ,
   "anything" : {
     "starts-with-othercmd" : [ '&othercmd' , "&cmdafter" ] ,
     "starts-with-*" : [ '&*' , "&anything" ] ,
@@ -88,4 +92,4 @@ const productions = {
   } ,
 } ;
 
-export default grammar.from( { start , eof , productions } ) ;
+export default grammar.from( { root , start , eof , productions } ) ;

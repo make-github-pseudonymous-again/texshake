@@ -10,12 +10,15 @@ export default async function shaketape ( inputTape , outputStream ) {
   const parser = ll1.from(grammar);
   const inputTokens = tokens(inputTape) ;
   const inputTokensTape = tape.fromAsyncIterable(inputTokens);
-  const tree = await parser.parse(inputTokensTape) ;
+  const tree = parser.parse(inputTokensTape) ;
 
   const ctx = { args : [ ] , variables : new Map() } ;
   const transformed = await ast.transform( tree , shaker , ctx ) ;
   const flattened = ast.flatten( transformed ) ;
 
-  for await ( const leaf of flattened ) outputStream.write(leaf.buffer) ;
+  for await ( const leaf of flattened ) {
+    if ( leaf.terminal === grammar.eof ) break ;
+    outputStream.write(leaf.buffer) ;
+  }
 
 }

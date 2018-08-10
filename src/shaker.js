@@ -56,6 +56,10 @@ const recurse = ( nonterminal , production ) => ( tree , match , ctx ) => ({
 
 export default {
 
+  "document" : {
+    "contents" : recurse( 'document' , 'contents' ) ,
+  } ,
+
   "anything" : {
     "starts-with-othercmd" : recurse( 'anything' , 'starts-with-othercmd' ) ,
     "starts-with-*" : recurse( 'anything' , 'starts-with-*' ) ,
