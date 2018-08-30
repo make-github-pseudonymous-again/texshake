@@ -44,7 +44,7 @@ $ texshake < 'my-awesome-latex-file-before.tex' > 'my-awesome-latex-file-after.t
 
 ### `\if...` `\else` `\fi` conditionals
 
-Prunes dead branches for user-defined `\if...` variables.
+Prunes dead branches for `\iftrue`'s, `\iffalse`'s, and user-defined `\if...` variables.
 
 > `\abctrue\ifabc ah\else oh\fi` ~ ` ah`
 

@@ -12,7 +12,12 @@ export default async function shaketape ( inputTape , outputStream ) {
   const inputTokensTape = tape.fromAsyncIterable(inputTokens);
   const tree = parser.parse(inputTokensTape) ;
 
-  const ctx = { args : [ ] , variables : new Map() } ;
+  const defaults = [
+    ['true', true],
+    ['false', false],
+  ] ;
+
+  const ctx = { args : [ ] , variables : new Map(defaults) } ;
   const transformed = await ast.transform( tree , shaker , ctx ) ;
   const flattened = ast.flatten( transformed ) ;
 

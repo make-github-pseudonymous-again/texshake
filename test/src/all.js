@@ -70,6 +70,15 @@ test( immutable , ' \\ifnum\\mynum>6 x \\else y \\fi ' ) ;
 // Stars in some text
 test( immutable , '*Lorem * ipsum* dolor sit $a*$ \\(m*e^*t_*\\)*' ) ;
 
+// iftrue fi
+test( transform , '\\iftrue ah\\fi' , ' ah' ) ;
+// iftrue else fi
+test( transform , '\\iftrue ah\\else oh\\fi' , ' ah' ) ;
+// iffalse fi
+test( transform , '\\iffalse ah\\fi' , '' ) ;
+// iffalse else fi
+test( transform , '\\iffalse ah\\else oh\\fi' , ' oh' ) ;
+
 // if fi
 test( transform , '\\abctrue\\ifabc ah\\fi' , ' ah' ) ; // should
 test( transform , '\\abcfalse\\ifabc ah\\fi' , '' ) ; // the
@@ -170,8 +179,6 @@ test( throws , ' \\newcommand\\test[{}]{x}', /1:19/) ;
 test( 'Wrong argument number format at 2:18 throws' , throws , '\n\\newcommand\\test[{}]{x}', /2:18/) ;
 
 // those became gobbled when we introduced async parsing
-// TODO fix it!
-// The culprit probably lies in ast.transform since we tested the rest in @aureooms/js-grammar
 test( 'Unmatched closing curly brace at 1:1 throws' , throws , '}abc', /1:1/) ;
 test( 'Unmatched closing curly brace at 1:2 throws' , throws , ' }abc', /1:2/) ;
 test( 'Unmatched closing curly brace at 1:3 throws' , throws , '  }abc', /1:3/) ;
