@@ -12,7 +12,7 @@ $ echo '\\newif\\ifah\\ahtrue\\ifah Shake it! :) \\else Do not shake it... :( \\
 
 [![License](https://img.shields.io/github/license/aureooms/texshake.svg)](https://raw.githubusercontent.com/aureooms/texshake/master/LICENSE)
 [![Version](https://img.shields.io/npm/v/texshake.svg)](https://www.npmjs.org/package/texshake)
-[![Build](https://img.shields.io/travis/aureooms/texshake.svg)](https://travis-ci.org/aureooms/texshake)
+[![Build](https://img.shields.io/travis/aureooms/texshake/master.svg)](https://travis-ci.org/aureooms/texshake/branches)
 [![Dependencies](https://img.shields.io/david/aureooms/texshake.svg)](https://david-dm.org/aureooms/texshake)
 [![Dev dependencies](https://img.shields.io/david/dev/aureooms/texshake.svg)](https://david-dm.org/aureooms/texshake?type=dev)
 [![GitHub issues](https://img.shields.io/github/issues/aureooms/texshake.svg)](https://github.com/aureooms/texshake/issues)
