@@ -59,6 +59,16 @@ async function* _tokens ( tape ) {
 
       else if ( cmd === '\\newcommand' ) cmdtype = 'newcommand' ;
 
+      else if ( cmd === '\\renewcommand' ) cmdtype = 'renewcommand' ;
+
+      else if ( cmd === '\\newenvironment' ) cmdtype = 'newenvironment' ;
+
+      else if ( cmd === '\\renewenvironment' ) cmdtype = 'renewenvironment' ;
+
+      else if ( cmd === '\\begin' ) cmdtype = 'begin' ;
+
+      else if ( cmd === '\\end' ) cmdtype = 'end' ;
+
       else if ( cmd === '\\fi' ) cmdtype = 'fi' ;
 
       else if ( cmd === '\\(' ) cmdtype = '\\(' ;

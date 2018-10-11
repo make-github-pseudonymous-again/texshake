@@ -9,6 +9,7 @@ const productions = {
   } ,
   "anything" : {
     "starts-with-othercmd" : [ '&othercmd' , "&cmdafter" ] ,
+    "starts-with-environment" : [ "&begin" , "&cmdafter", "&end", "&anything"]
     "starts-with-*" : [ '&*' , "&anything" ] ,
     "starts-with-[" : [ '&[' , "&anything" ] ,
     "starts-with-]" : [ '&]' , "&anything" ] ,
@@ -18,6 +19,7 @@ const productions = {
   } ,
   "anything-but-]" : {
     "starts-with-othercmd" : [ '&othercmd' , "&cmdafter-but-not-]" ] ,
+    "starts-with-environment" : [ "&begin" , "&cmdafter-but-not-]", "&end", "&anything-but-]"]
     "starts-with-*" : [ '&*' , "&anything-but-]" ] ,
     "starts-with-[" : [ '&[' , "&anything-but-]" ] ,
     "starts-with-a-group" : [ '&group' , '&anything-but-]' ] ,
@@ -33,6 +35,12 @@ const productions = {
   "othercmd" : {
     "othercmd" : [ '=othercmd' , "&cmd*" , "&cmdargs" ] ,
   },
+  "begin" : {
+    "begin" : [ "=begin", '={' , "=text" , '=}' , "&cmdargs"]
+  } ,
+  "end" : {
+    "end" : [ "=end", '={' , "=text" , '=}']
+  } ,
   "*" : {
     "*" : [ '=*' ] ,
   } ,
@@ -51,6 +59,9 @@ const productions = {
     "comment" : [ '=comment' ] , // 1.5
     "def" : [ '=def' , '=othercmd' , '={' , "&anything" , '=}' ] , // 1.7
     "newcommand" : [ '=newcommand' , "&cmddef" ] , // 1.8
+    "renewcommand" : [ '=renewcommand' , "&cmddef" ] ,
+    "newenvironment" : [ '=newenvironment' , "&envdef" ] ,
+    "renewenvironment" : [ '=renewenvironment' , "&envdef" ] ,
     "\n" : [ '=\n' ] ,
     "arg" : [ '=arg' ] , // 1.12
     "$" : [ '=$' ] ,
@@ -69,6 +80,18 @@ const productions = {
   "cmddefargs" : { // command definition arguments 4
     "yes" : [ '=[' , '=text' , '=]' ] , // 4.0
     "no" : [ ] , // 4.1
+  } ,
+  "envdef" : {
+    "{envname}[nargs][default]{begin}{end}" : [ '={' , '=text' , '=}' , "&envdefargs" , '={' , "&anything" , '=}' , '={' , "&anything" , '=}' ] ,
+    "*{envname}[nargs][default]{begin}{end}" : [ '=*' , '={' , '=text' , '=}' , "&envdefargs" , '={' , "&anything" , '=}' , '={' , "&anything" , '=}' ] ,
+  } ,
+  "envdefargs" : {
+    "yes" : [ '=[' , '=text' , '=]' , '&envdefdefault' ] ,
+    "no" : [ ] ,
+  } ,
+  "envdefdefault" : {
+    "yes" : [ '=[' , '&anything-but-]' , '=]' ] ,
+    "no" : [ ] ,
   } ,
   "cmd*" : { // othercmd star : 5
     "yes" : [ '=*' ] , // 5.0
