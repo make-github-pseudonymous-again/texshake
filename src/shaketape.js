@@ -16,12 +16,12 @@ export default async function shaketape ( inputTape , outputStream ) {
     ['if' , new Map([
       ['true', true],
       ['false', false],
-    ]),
+    ])],
     ['cmd' , new Map([
-    ]),
+    ])],
     ['env' , new Map([
-    ]),
-  ] ;
+    ])],
+  ]) ;
 
   const ctx = { args : [ ] , variables } ;
   const transformed = await ast.transform( tree , shaker , ctx ) ;

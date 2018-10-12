@@ -202,5 +202,8 @@ const files = fs.readdirSync(filedir) ;
 for ( const filename of files ) test( immutableFile , `${filedir}/${filename}` ) ;
 
 // newenvironment
+test( immutable , '\\begin{theorem}\\dots\\end{theorem}' ) ;
+test( immutable , '\\begin{theorem}[Brol et al.~\cite{brol}]\\dots\\end{theorem}' ) ;
+
 test( immutable , '\\newenvironment{test}[1][]{#1}{}\\begin{test}x\\end{test}' ) ;
 test( immutable , '\\renewenvironment{test}[1][]{#1}{}' ) ;
