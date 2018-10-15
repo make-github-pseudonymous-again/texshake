@@ -60,8 +60,8 @@ const productions = {
     "def" : [ '=def' , '=othercmd' , '={' , "&anything" , '=}' ] , // 1.7
     "newcommand" : [ '=newcommand' , "&cmddef" ] , // 1.8
     "renewcommand" : [ '=renewcommand' , "&cmddef" ] ,
-    //"newenvironment" : [ '=newenvironment' , "&environment-definition" ] ,
-    //"renewenvironment" : [ '=renewenvironment' , "&environment-definition" ] ,
+    "newenvironment" : [ '=newenvironment' , "&environment-definition" ] ,
+    "renewenvironment" : [ '=renewenvironment' , "&environment-definition" ] ,
     "\n" : [ '=\n' ] ,
     "arg" : [ '=arg' ] , // 1.12
     "$" : [ '=$' ] ,
@@ -81,18 +81,18 @@ const productions = {
     "yes" : [ '=[' , '=text' , '=]' ] , // 4.0
     "no" : [ ] , // 4.1
   } ,
-  //"environment-definition" : {
-    //"{envname}[nargs][default]{begin}{end}" : [ '={' , '=text' , '=}' , "&arguments-for-environment-definition" , '={' , "&anything" , '=}' , '={' , "&anything" , '=}' ] ,
-    //"*{envname}[nargs][default]{begin}{end}" : [ '=*' , '={' , '=text' , '=}' , "&arguments-for-environment-definition" , '={' , "&anything" , '=}' , '={' , "&anything" , '=}' ] ,
-  //} ,
-  //"arguments-for-environment-definition" : {
-    //"yes" : [ '=[' , '=text' , '=]' , '&default-argument-for-environment-definition' ] ,
-    //"no" : [ ] ,
-  //} ,
-  //"default-argument-for-environment-definition" : {
-    //"yes" : [ '=[' , '&anything-but-]' , '=]' ] ,
-    //"no" : [ ] ,
-  //} ,
+  "environment-definition" : {
+    "{envname}[nargs][default]{begin}{end}" : [ '={' , '=text' , '=}' , "&arguments-for-environment-definition" , '={' , "&anything" , '=}' , '={' , "&anything" , '=}' ] ,
+    "*{envname}[nargs][default]{begin}{end}" : [ '=*' , '={' , '=text' , '=}' , "&arguments-for-environment-definition" , '={' , "&anything" , '=}' , '={' , "&anything" , '=}' ] ,
+  } ,
+  "arguments-for-environment-definition" : {
+    "yes" : [ '=[' , '=text' , '=]' , '&default-argument-for-environment-definition' ] ,
+    "no" : [ ] ,
+  } ,
+  "default-argument-for-environment-definition" : {
+    "yes" : [ '=[' , '&anything-but-]' , '=]' ] ,
+    "no" : [ ] ,
+  } ,
   "cmd*" : { // othercmd star : 5
     "yes" : [ '=*' ] , // 5.0
     "no" : [ ] , // 5.1

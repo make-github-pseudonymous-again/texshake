@@ -205,5 +205,10 @@ for ( const filename of files ) test( immutableFile , `${filedir}/${filename}` )
 test( immutable , '\\begin{theorem}\\dots\\end{theorem}' ) ;
 test( immutable , '\\begin{theorem}[Brol et al.~\cite{brol}]\\dots\\end{theorem}' ) ;
 
-test( immutable , '\\newenvironment{test}[1][]{#1}{}\\begin{test}x\\end{test}' ) ;
-test( immutable , '\\renewenvironment{test}[1][]{#1}{}' ) ;
+test( transform , '\\newenvironment{test}[1][]{#1}{}\\begin{test}x\\end{test}' , 'x' ) ;
+test( transform , '\\renewenvironment{test}[1][]{#1}{}\\begin{test}x\\end{test}' , 'x' ) ;
+test( transform , '\\newenvironment{test}[1][]{#1}{}' , '' ) ;
+test( transform , '\\renewenvironment{test}[1][]{#1}{}' , '' ) ;
+
+// argument escaping
+//test( transform , '\\newcommand\\x[1]{\\def\\#1[1]{##1}}\\x{test}' , '\\def\\test[1]{#1}' ) ;

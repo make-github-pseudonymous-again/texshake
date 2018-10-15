@@ -140,27 +140,44 @@ export default {
       const rightbracket = await next(it) ; // }
 
       const args = await ast.materialize(await next(it));
-      const cmdargs = [];
-      let arg_i = args
-      while ( arg_i.production === 'normal' ) {
-	const [ group , tail ] = arg_i.children ;
-	const [ _open , arg , _close ] = group.children ;
-	cmdargs.push(arg) ;
-	arg_i = tail ;
+
+      if ( ctx.variables.get('env').has(env) ) {
+
+	const [ nargs , dfltarg , begin , end ] = ctx.variables.get('env').get(env) ;
+
+	const cmdargs = [];
+	let arg_i = args
+	if ( arg_i.production === 'optional' ) {
+	  if (dfltarg === null) throw new Error(`Environment ${env} is not defined with a default argument.`) ;
+	  const [ optgroup , tail ] = arg_i.children ;
+	  const [ _open , arg , _close ] = optgroup.children ;
+	  cmdargs.push(arg);
+	}
+	else if (dfltarg !== null) cmdargs.push(dfltarg) ;
+	while ( arg_i.production === 'normal' ) {
+	  const [ group , tail ] = arg_i.children ;
+	  const [ _open , arg , _close ] = group.children ;
+	  cmdargs.push(arg) ;
+	  arg_i = tail ;
+	}
+
+	const complex = arg_i.production === 'optional' ;
+	if (!complex) {
+	  // do not parse complex syntax
+	  if (cmdargs.length !== nargs)
+	    throw new Error(`Environment ${env} is defined with ${nargs} arguments but ${cmdargs.length} were given.`) ;
+	  return t( begin , match , { variables: ctx.variables , args: [ ctx.args , cmdargs ] } ) ;
+	}
+
       }
-      const hasoptargs = arg_i.production === 'optional' ;
-      if (!hasoptargs && ctx.variables.get('env').has(env)) {
-	// too hard to parse opt args currently
-	const [ nargs , defaultarg , begin , end ] = ctx.variables.get('env').get(env) ;
-	if (cmdargs.length !== nargs) throw new Error(`Environment ${env} is defined with ${nargs} arguments but ${cmdargs.length} were given.`) ;
-	return t( begin , match , { variables: ctx.variables , args: [ ctx.args , cmdargs ] } ) ;
-      }
-      else return {
+
+      return {
 	'type' : 'node' ,
 	'nonterminal' : 'othercmd' ,
 	'production' : 'othercmd' ,
 	'children' : chain( [ [ begincmd , leftbracket , envtext , rightbracket ] , m([args], match, ctx) ] ) ,
       } ;
+
     } ,
 
   } ,
@@ -281,12 +298,19 @@ export default {
       return t( cmddef , match , ctx ) ;
     } ,
 
-    //"newenvironment": async ( tree , match , ctx ) => {
-      //const it = iter(tree.children) ;
-      //await next(it) ; // \newenvironment
-      //const envdef = await next(it) ;
-      //return t( envdef , match , ctx ) ;
-    //} ,
+    "newenvironment": async ( tree , match , ctx ) => {
+      const it = iter(tree.children) ;
+      await next(it) ; // \newenvironment
+      const envdef = await next(it) ;
+      return t( envdef , match , ctx ) ;
+    } ,
+
+    "renewenvironment": async ( tree , match , ctx ) => {
+      const it = iter(tree.children) ;
+      await next(it) ; // \renewenvironment
+      const envdef = await next(it) ;
+      return t( envdef , match , ctx ) ;
+    } ,
 
     "\n" : tree => tree ,
 
@@ -388,6 +412,58 @@ export default {
     "no" : err( "cmddefargs" , "no" ) ,
   } ,
 
+  "environment-definition" : {
+    "{envname}[nargs][default]{begin}{end}" :  async ( tree , _ , { variables } ) => {
+      // do not know what to do with '*' at the moment
+      // see https://tex.stackexchange.com/questions/1050/whats-the-difference-between-newcommand-and-newcommand
+      const it = iter(tree.children) ;
+      //await next(it); // *
+      await next(it); // {
+      const envtext = await next(it);
+      const env = envtext.buffer;
+      await next(it); // }
+      const args = await next(it); // [nargs][default]
+      let nargs = 0;
+      let dfltarg = null;
+      if (args.production === 'yes') {
+	const it2 = iter(args.children);
+	await next(it2) ; // [
+	const text = await next(it2) ;
+	nargs = parseInt(text.buffer, 10);
+	await next(it2) ; // ]
+
+	const dflt = await next(it2) ;
+	if ( dflt.production === 'yes' ) {
+	  const it3 = iter(dflt.children);
+	  await next(it3) ; // [
+	  const anything3 = await next(it3);
+	  dfltarg = await ast.materialize(anything3) ;
+	  await next(it3) ; // ]
+	}
+
+      }
+      await next(it); // {
+      const anything1 = await next(it);
+      const begin = await ast.materialize(anything1) ;
+      await next(it); // }
+      await next(it); // {
+      const anything2 = await next(it);
+      const end = await ast.materialize(anything2) ;
+      await next(it); // }
+      variables.get('env').set(env, [ nargs , dfltarg , begin , end ]);
+      return empty;
+    } ,
+    //"{envname}[nargs][default]{begin}{end}" : recurse( 'environment-definition' , '{envname}[nargs][default]{begin}{end}' ) ,
+    "*{envname}[nargs][default]{begin}{end}" : recurse( 'environment-definition' , '*{envname}[nargs][default]{begin}{end}' ) ,
+  } ,
+  "arguments-for-environment-definition" : {
+    "yes" : recurse('arguments-for-environment-definition' , 'yes' ) ,
+    "no" : () => empty ,
+  } ,
+  "default-argument-for-environment-definition" : {
+    "yes" : recurse('default-argument-for-environment-definition' , 'yes' ) ,
+    "no" : () => empty ,
+  } ,
   //"envdef" : {
     //"{envname}[nargs][default]{begin}{end}": async ( tree , _ , { variables } ) => {
        //do not know what to do with '*' at the moment
