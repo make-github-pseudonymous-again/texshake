@@ -60,6 +60,10 @@ Expands each user-defined macro and removes their definition.
 
 > `\newcommand\swap[2]{#2#1}\swap{a}{b}` ~ `ba`
 
+### `\newenvironment` user-defined environments
+
+> `\newenvironment{items}{\begin{itemize}}{\end{itemize}}\begin{items}\end{items}` ~ `\begin{itemize}\end{itemize}`
+
 ### Altogether now!
 
 > `\myfalse\ifmy\def\xyz{A cat.}\else\def\xyz{A dog.}\fi\xyz% $#@!` ~ `A dog.%`

@@ -224,6 +224,7 @@ test( transform , '\\newenvironment{test}[1]{#1}{}\\begin{test}{a}x\\end{test}' 
 test( transform , '\\renewenvironment{test}[1]{#1}{}\\begin{test}{a}x\\end{test}' , 'ax' ) ;
 test( transform , '\\newenvironment{test}[1][]{#1}{}' , '' ) ;
 test( transform , '\\renewenvironment{test}[1][]{#1}{}' , '' ) ;
+test( transform , '\\newenvironment{items}{\\begin{itemize}}{\\end{itemize}}\\begin{items}\\end{items}' , '\\begin{itemize}\\end{itemize}' )
 test( throws , '\\newenvironment{test}[1][]{#1}{}\\begin{test}{a}x\\end{test}' , /test is defined with 1 arguments but 2 were given/ ) ;
 test( throws , '\\renewenvironment{test}[1][]{#1}{}\\begin{test}{a}x\\end{test}' , /test is defined with 1 arguments but 2 were given/ ) ;
 
