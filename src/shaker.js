@@ -211,6 +211,7 @@ export default {
 	const complex = arg_i.production === 'optional' ;
 	if (!complex) {
 	  envStackEntry.expand = true ;
+	  envStackEntry.args = cmdargs ;
 	  // do not parse complex syntax
 	  if (cmdargs.length !== nargs)
 	    throw new Error(`Environment ${env} is defined with ${nargs} arguments but ${cmdargs.length} were given.`) ;
@@ -246,14 +247,14 @@ export default {
 	throw new Error(`Trying to end environment on an empty stack with \\end{${env}} (matching \\begin{${env}} is missing).`);
       }
 
-      const { expand , env: currentEnv , children } = ctx.env.pop();
+      const { expand , env: currentEnv , children , args } = ctx.env.pop();
 
       if ( currentEnv !== env ) {
 	throw new Error(`Trying to match \\begin{${currentEnv}} with \\end{${env}}.`);
       }
       else if (expand) {
 	const [ nargs , defaultarg , begin , end ] = ctx.variables.get('env').get(env) ;
-	return t( end , match , { env: children , variables: ctx.variables, args: ctx.args } ) ;
+	return t( end , match , { env: children , variables: ctx.variables , args: [ ctx.args , args ] } ) ;
       }
       else {
 	return {

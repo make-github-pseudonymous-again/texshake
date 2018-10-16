@@ -214,8 +214,18 @@ test( immutable , '\\begin{theorem}[Brol et al.~\\cite{brol}]\\dots\\end{theorem
 
 test( transform , '\\newenvironment{test}[1][]{#1}{}\\begin{test}x\\end{test}' , 'x' ) ;
 test( transform , '\\renewenvironment{test}[1][]{#1}{}\\begin{test}x\\end{test}' , 'x' ) ;
+test( transform , '\\newenvironment{test}[1][b]{#1}{}\\begin{test}x\\end{test}' , 'bx' ) ;
+test( transform , '\\renewenvironment{test}[1][b]{#1}{}\\begin{test}x\\end{test}' , 'bx' ) ;
+test( transform , '\\newenvironment{test}[2][b]{#1}{#2}\\begin{test}{z}x\\end{test}' , 'bxz' ) ;
+test( transform , '\\renewenvironment{test}[2][b]{#1}{#2}\\begin{test}{z}x\\end{test}' , 'bxz' ) ;
+test( transform , '\\newenvironment{test}[2][b]{#1}{#2}\\begin{test}[a]{z}x\\end{test}' , 'axz' ) ;
+test( transform , '\\renewenvironment{test}[2][b]{#1}{#2}\\begin{test}[a]{z}x\\end{test}' , 'axz' ) ;
+test( transform , '\\newenvironment{test}[1]{#1}{}\\begin{test}{a}x\\end{test}' , 'ax' ) ;
+test( transform , '\\renewenvironment{test}[1]{#1}{}\\begin{test}{a}x\\end{test}' , 'ax' ) ;
 test( transform , '\\newenvironment{test}[1][]{#1}{}' , '' ) ;
 test( transform , '\\renewenvironment{test}[1][]{#1}{}' , '' ) ;
+test( throws , '\\newenvironment{test}[1][]{#1}{}\\begin{test}{a}x\\end{test}' , /test is defined with 1 arguments but 2 were given/ ) ;
+test( throws , '\\renewenvironment{test}[1][]{#1}{}\\begin{test}{a}x\\end{test}' , /test is defined with 1 arguments but 2 were given/ ) ;
 
 // transformed input files
 const transformedFiledir = 'test/data/transform' ;
