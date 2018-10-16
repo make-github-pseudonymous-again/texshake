@@ -520,10 +520,10 @@ export default {
   } ,
 
   "ignore" : {
-    "starts-with-a-space" : () => empty ,
-    "starts-with-a-newline" : () => empty ,
-    "starts-with-a-comment" : () => empty ,
-    "nothing" : () => empty ,
+    "starts-with-a-space" : err('ignore', 'starts-with-a-space') ,
+    "starts-with-a-newline" : err('ignore', 'starts-with-a-newline') ,
+    "starts-with-a-comment" : err('ignore', 'starts-with-a-comment') ,
+    "nothing" : err('ignore', 'nothing') ,
   } ,
 
 } ;
