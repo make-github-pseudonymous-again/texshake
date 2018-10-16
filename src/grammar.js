@@ -9,6 +9,8 @@ const productions = {
   } ,
   "anything" : {
     "starts-with-othercmd" : [ '&othercmd' , "&cmdafter" ] ,
+    "starts-with-begin-environment" : [ "&begin-environment" , "&cmdafter"] ,
+    "starts-with-end-environment" : [ "&end-environment" , "&anything" ] ,
     "starts-with-*" : [ '&*' , "&anything" ] ,
     "starts-with-[" : [ '&[' , "&anything" ] ,
     "starts-with-]" : [ '&]' , "&anything" ] ,
@@ -18,6 +20,8 @@ const productions = {
   } ,
   "anything-but-]" : {
     "starts-with-othercmd" : [ '&othercmd' , "&cmdafter-but-not-]" ] ,
+    "starts-with-begin-environment" : [ "&begin-environment" , "&cmdafter-but-not-]" ] ,
+    "starts-with-end-environment" : [ "&end-environment" , "&anything-but-]" ] ,
     "starts-with-*" : [ '&*' , "&anything-but-]" ] ,
     "starts-with-[" : [ '&[' , "&anything-but-]" ] ,
     "starts-with-a-group" : [ '&group' , '&anything-but-]' ] ,
@@ -33,6 +37,12 @@ const productions = {
   "othercmd" : {
     "othercmd" : [ '=othercmd' , "&cmd*" , "&cmdargs" ] ,
   },
+  "begin-environment" : {
+    "begin-environment" : [ "=begin", '={' , "=text" , '=}' , "&cmdargs"] ,
+  } ,
+  "end-environment" : {
+    "end-environment" : [ "=end", '={' , "=text" , '=}'] ,
+  } ,
   "*" : {
     "*" : [ '=*' ] ,
   } ,
@@ -50,8 +60,12 @@ const productions = {
     "truecmd" : [ '=truecmd' ] , // 1.4
     "comment" : [ '=comment' ] , // 1.5
     "def" : [ '=def' , '=othercmd' , '={' , "&anything" , '=}' ] , // 1.7
-    "newcommand" : [ '=newcommand' , "&cmddef" ] , // 1.8
+    "newcommand" : [ '=newcommand' , "&command-definition" ] , // 1.8
+    "renewcommand" : [ '=renewcommand' , "&command-definition" ] ,
+    "newenvironment" : [ '=newenvironment' , "&environment-definition" ] ,
+    "renewenvironment" : [ '=renewenvironment' , "&environment-definition" ] ,
     "\n" : [ '=\n' ] ,
+    " " : [ '= ' ] ,
     "arg" : [ '=arg' ] , // 1.12
     "$" : [ '=$' ] ,
     "math" : [ '=\\(' , '&anything' , '=\\)' ] ,
@@ -61,14 +75,22 @@ const productions = {
     "elsefi" : [ '=else' , "&anything" , '=fi' ] , // 2.0
     "fi" : [ '=fi' ] , // 2.1
   } ,
-  "cmddef" : { // command definition 3
-    "{cmd}[x]{anything}" : [ '={' , '=othercmd' , '=}' , "&cmddefargs" , '={' , "&anything" , '=}' ] ,
-    "cmd[x]{anything}" : [ '=othercmd' , "&cmddefargs" , '={' , "&anything" , '=}' ] ,
-    "*cmd[x]{anything}" : [ '=*' , '=othercmd' , "&cmddefargs" , '={' , "&anything" , '=}' ] ,
+  "command-definition" : { // command definition 3
+    "{cmd}[nargs][default]{anything}" : [ '={' , '=othercmd' , '=}' , "&definition-parameters" , '={' , "&anything" , '=}' ] ,
+    "cmd[nargs][default]{anything}" : [ '=othercmd' , "&definition-parameters" , '={' , "&anything" , '=}' ] ,
+    "*cmd[nargs][default]{anything}" : [ '=*' , '=othercmd' , "&definition-parameters" , '={' , "&anything" , '=}' ] ,
   } ,
-  "cmddefargs" : { // command definition arguments 4
-    "yes" : [ '=[' , '=text' , '=]' ] , // 4.0
-    "no" : [ ] , // 4.1
+  "environment-definition" : {
+    "{envname}[nargs][default]{begin}{end}" : [ '={' , '=text' , '=}' , "&ignore" , "&definition-parameters" , '={' , "&anything" , '=}' , "&ignore" , '={' , "&anything" , '=}' ] ,
+    "*{envname}[nargs][default]{begin}{end}" : [ '=*' , '={' , '=text' , '=}' , "&definition-parameters" , '={' , "&anything" , '=}' , '={' , "&anything" , '=}' ] ,
+  } ,
+  "definition-parameters" : {
+    "yes" : [ '=[' , '=text' , '=]' , '&default-argument-for-definition' , "&ignore" ] ,
+    "no" : [ ] ,
+  } ,
+  "default-argument-for-definition" : {
+    "yes" : [ '=[' , '&anything-but-]' , '=]' ] ,
+    "no" : [ ] ,
   } ,
   "cmd*" : { // othercmd star : 5
     "yes" : [ '=*' ] , // 5.0
@@ -81,13 +103,23 @@ const productions = {
   } ,
   "cmdafter" : { // after othercmd
     "othercmd" : [ "&othercmd" , "&cmdafter" ] ,
+    "begin-environment" : [ "&begin-environment" , "&cmdafter"] ,
+    "end-environment" : [ "&end-environment" , "&anything" ] ,
     "]-then-anything" : [ "&]" , "&anything" ] ,
     "something-else-then-anything" : [ "&something-else" , "&anything" ] ,
     "nothing" : [ ] ,
   } ,
   "cmdafter-but-not-]" : { // after othercmd
     "othercmd" : [ "&othercmd" , "&cmdafter-but-not-]" ] ,
+    "begin-environment" : [ "&begin-environment" , "&cmdafter-but-not-]" ] ,
+    "end-environment" : [ "&end-environment" , "&anything-but-]" ] ,
     "something-else-then-anything" : [ "&something-else" , "&anything-but-]" ] ,
+    "nothing" : [ ] ,
+  } ,
+  "ignore" : {
+    "starts-with-a-space" : [ "= " , "&ignore" ] ,
+    "starts-with-a-newline" : [ "=\n" , "&ignore" ] ,
+    "starts-with-a-comment" : [ "=comment" , "&ignore" ] ,
     "nothing" : [ ] ,
   } ,
 } ;

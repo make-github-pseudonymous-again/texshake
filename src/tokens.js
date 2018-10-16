@@ -16,7 +16,7 @@ async function* _tokens ( tape ) {
       position += buffer.length;
       buffer = '';
     }
-  }
+  } ;
 
   while ( true ) {
 
@@ -45,31 +45,38 @@ async function* _tokens ( tape ) {
 
       let cmdtype = 'othercmd' ;
 
-      if ( cmd.substr(0,3) === '\\if' ) cmdtype = 'ifcmd' ;
+      switch ( cmd ) {
 
-      else if (cmd.substr(cmd.length-5, 5) === 'false' ) cmdtype = 'falsecmd' ;
+	case '\\newif':
+	case '\\else':
+	case '\\def':
+	case '\\newcommand':
+	case '\\renewcommand':
+	case '\\newenvironment':
+	case '\\renewenvironment':
+	case '\\begin':
+	case '\\end':
+	case '\\fi':
+	  cmdtype = cmd.substr(1); // remove the leading backslash
+	  break;
 
-      else if (cmd.substr(cmd.length-4, 4) === 'true' ) cmdtype = 'truecmd' ;
+	case '\\(':
+	case '\\)':
+	case '\\[':
+	case '\\]':
+	  cmdtype = cmd;
+	  break;
 
-      else if ( cmd === '\\newif' ) cmdtype = 'newif' ;
+	default:
+	  if ( cmd.substr(0,3) === '\\if' ) cmdtype = 'ifcmd' ;
+	  else if (cmd.substr(cmd.length-5, 5) === 'false' ) cmdtype = 'falsecmd' ;
+	  else if (cmd.substr(cmd.length-4, 4) === 'true' ) cmdtype = 'truecmd' ;
+	  break;
 
-      else if ( cmd === '\\else' ) cmdtype = 'else' ;
-
-      else if ( cmd === '\\def' ) cmdtype = 'def' ;
-
-      else if ( cmd === '\\newcommand' ) cmdtype = 'newcommand' ;
-
-      else if ( cmd === '\\fi' ) cmdtype = 'fi' ;
-
-      else if ( cmd === '\\(' ) cmdtype = '\\(' ;
-
-      else if ( cmd === '\\)' ) cmdtype = '\\)' ;
-
-      else if ( cmd === '\\[' ) cmdtype = '\\[' ;
-
-      else if ( cmd === '\\]' ) cmdtype = '\\]' ;
+      }
 
       yield [ cmdtype , cmd , new Position(line, position) ] ;
+
       if ( cmd === '\\\n' ) {
 	++line;
 	position = FIRST_POSITION;
@@ -97,63 +104,54 @@ async function* _tokens ( tape ) {
       yield [ 'arg' , arg , new Position(line, position) ] ;
       position += arg.length;
     }
-    else if ( c === '{' ) {
-      yield* flush();
-      yield [ '{' , '{' , new Position(line, position) ] ;
-      ++position;
-    }
-    else if ( c === '}' ) {
-      yield* flush();
-      yield [ '}' , '}' , new Position(line, position) ] ;
-      ++position;
-    }
-    else if ( c === '[' ) {
-      yield* flush();
-      yield [ '[' , '[' , new Position(line, position) ] ;
-      ++position;
-    }
-    else if ( c === ']' ) {
-      yield* flush();
-      yield [ ']' , ']' , new Position(line, position) ] ;
-      ++position;
-    }
-    else if ( c === '*' ) {
-      yield* flush();
-      yield [ '*' , '*' , new Position(line, position) ] ;
-      ++position;
-    }
-    else if ( c === '$' ) {
-      yield* flush();
-      yield [ '$' , '$' , new Position(line, position) ] ;
-      ++position;
-    }
-    else if ( c === '\n' ) {
-      yield* flush();
-      yield [ '\n' , '\n' , new Position(line, position) ] ;
-      ++line;
-      position = FIRST_POSITION;
-    }
-    else if ( c === '%') {
-      yield* flush();
-      buffer = '%';
-      let d = '';
-      while ( true ) {
-	d = await tape.read();
-	if ( d === tape.eof || d === '\n' ) break ;
-	buffer += d ;
-      }
-      yield [ 'comment' , buffer , new Position(line, position) ] ;
-      position += buffer.length;
-      buffer = '';
-      if ( d === '\n' ) {
-	yield [ '\n' , '\n' , new Position(line, position) ] ;
-	++line;
-        position = FIRST_POSITION;
-      }
-    }
     else {
-      buffer += c ;
+      switch ( c ) {
+
+	case '{':
+	case '}':
+	case '[':
+	case ']':
+	case '*':
+	case '$':
+	case ' ':
+	  yield* flush();
+	  yield [ c , c , new Position(line, position) ] ;
+	  ++position;
+	  break;
+
+	case '\n':
+	  yield* flush();
+	  yield [ c , c , new Position(line, position) ] ;
+	  ++line;
+	  position = FIRST_POSITION;
+	  break;
+
+	case '%':
+	  yield* flush();
+	  buffer = '%';
+	  let d = '';
+	  while ( true ) {
+	    d = await tape.read();
+	    if ( d === tape.eof || d === '\n' ) break ;
+	    buffer += d ;
+	  }
+	  yield [ 'comment' , buffer , new Position(line, position) ] ;
+	  position += buffer.length;
+	  buffer = '';
+	  if ( d === '\n' ) {
+	    yield [ '\n' , '\n' , new Position(line, position) ] ;
+	    ++line;
+	    position = FIRST_POSITION;
+	  }
+	  break;
+
+	default:
+	  buffer += c ;
+	  break;
+	}
+
     }
+
   }
 
   yield* flush();
