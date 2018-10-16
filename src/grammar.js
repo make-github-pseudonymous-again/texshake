@@ -60,8 +60,8 @@ const productions = {
     "truecmd" : [ '=truecmd' ] , // 1.4
     "comment" : [ '=comment' ] , // 1.5
     "def" : [ '=def' , '=othercmd' , '={' , "&anything" , '=}' ] , // 1.7
-    "newcommand" : [ '=newcommand' , "&cmddef" ] , // 1.8
-    "renewcommand" : [ '=renewcommand' , "&cmddef" ] ,
+    "newcommand" : [ '=newcommand' , "&command-definition" ] , // 1.8
+    "renewcommand" : [ '=renewcommand' , "&command-definition" ] ,
     "newenvironment" : [ '=newenvironment' , "&environment-definition" ] ,
     "renewenvironment" : [ '=renewenvironment' , "&environment-definition" ] ,
     "\n" : [ '=\n' ] ,
@@ -75,24 +75,20 @@ const productions = {
     "elsefi" : [ '=else' , "&anything" , '=fi' ] , // 2.0
     "fi" : [ '=fi' ] , // 2.1
   } ,
-  "cmddef" : { // command definition 3
-    "{cmd}[x]{anything}" : [ '={' , '=othercmd' , '=}' , "&cmddefargs" , '={' , "&anything" , '=}' ] ,
-    "cmd[x]{anything}" : [ '=othercmd' , "&cmddefargs" , '={' , "&anything" , '=}' ] ,
-    "*cmd[x]{anything}" : [ '=*' , '=othercmd' , "&cmddefargs" , '={' , "&anything" , '=}' ] ,
-  } ,
-  "cmddefargs" : { // command definition arguments 4
-    "yes" : [ '=[' , '=text' , '=]' ] , // 4.0
-    "no" : [ ] , // 4.1
+  "command-definition" : { // command definition 3
+    "{cmd}[nargs][default]{anything}" : [ '={' , '=othercmd' , '=}' , "&definition-parameters" , '={' , "&anything" , '=}' ] ,
+    "cmd[nargs][default]{anything}" : [ '=othercmd' , "&definition-parameters" , '={' , "&anything" , '=}' ] ,
+    "*cmd[nargs][default]{anything}" : [ '=*' , '=othercmd' , "&definition-parameters" , '={' , "&anything" , '=}' ] ,
   } ,
   "environment-definition" : {
-    "{envname}[nargs][default]{begin}{end}" : [ '={' , '=text' , '=}' , "&ignore" , "&arguments-for-environment-definition" , '={' , "&anything" , '=}' , "&ignore" , '={' , "&anything" , '=}' ] ,
-    "*{envname}[nargs][default]{begin}{end}" : [ '=*' , '={' , '=text' , '=}' , "&arguments-for-environment-definition" , '={' , "&anything" , '=}' , '={' , "&anything" , '=}' ] ,
+    "{envname}[nargs][default]{begin}{end}" : [ '={' , '=text' , '=}' , "&ignore" , "&definition-parameters" , '={' , "&anything" , '=}' , "&ignore" , '={' , "&anything" , '=}' ] ,
+    "*{envname}[nargs][default]{begin}{end}" : [ '=*' , '={' , '=text' , '=}' , "&definition-parameters" , '={' , "&anything" , '=}' , '={' , "&anything" , '=}' ] ,
   } ,
-  "arguments-for-environment-definition" : {
-    "yes" : [ '=[' , '=text' , '=]' , '&default-argument-for-environment-definition' , "&ignore" ] ,
+  "definition-parameters" : {
+    "yes" : [ '=[' , '=text' , '=]' , '&default-argument-for-definition' , "&ignore" ] ,
     "no" : [ ] ,
   } ,
-  "default-argument-for-environment-definition" : {
+  "default-argument-for-definition" : {
     "yes" : [ '=[' , '&anything-but-]' , '=]' ] ,
     "no" : [ ] ,
   } ,

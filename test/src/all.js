@@ -227,3 +227,9 @@ test( transformFile , `${transformedInputFiledir}/${filename}` , `${transformedO
 
 // argument escaping
 //test( transform , '\\newcommand\\x[1]{\\def\\#1[1]{##1}}\\x{test}' , '\\def\\test[1]{#1}' ) ;
+
+// default arguments with newcommand and renewcommand
+test( transform , '\\newcommand{\\price}[2][17.5]{\\pounds #2 excl VAT @ #1\\%}\\price{100}' , '\\pounds 100 excl VAT @ 17.5\\%') ;
+test( transform , '\\newcommand{\\price}[2][17.5]{\\pounds #2 excl VAT @ #1\\%}\\price[20]{1000}' , '\\pounds 1000 excl VAT @ 20\\%') ;
+test( transform , '\\renewcommand{\\price}[2][17.5]{\\pounds #2 excl VAT @ #1\\%}\\price{100}' , '\\pounds 100 excl VAT @ 17.5\\%') ;
+test( transform , '\\renewcommand{\\price}[2][17.5]{\\pounds #2 excl VAT @ #1\\%}\\price[20]{1000}' , '\\pounds 1000 excl VAT @ 20\\%') ;

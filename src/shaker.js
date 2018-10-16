@@ -31,6 +31,29 @@ async function* chain ( iterables ) {
 
 }
 
+async function parseDefinitionParameters ( parameters ) {
+  let nargs = 0;
+  let dfltarg = null;
+  if (parameters.production === 'yes') {
+    const it2 = iter(parameters.children);
+    await next(it2) ; // [
+    const text = await next(it2) ;
+    nargs = parseInt(text.buffer, 10);
+    await next(it2) ; // ]
+
+    const dfltparam = await next(it2) ;
+    if ( dfltparam.production === 'yes' ) {
+      const it3 = iter(dfltparam.children);
+      await next(it3) ; // [
+      const anything3 = await next(it3);
+      dfltarg = await ast.materialize(anything3) ;
+      await next(it3) ; // ]
+    }
+
+  }
+  return [ nargs , dfltarg ] ;
+}
+
 
 const empty = {
   'type' : 'node' ,
@@ -56,7 +79,6 @@ const recurse = ( nonterminal , production ) => ( tree , match , ctx ) => ({
   production ,
   "children" : ast.cmap( async x => x.type === 'leaf' ? x : await t( x , match , ctx ) , tree.children ) ,
 }) ;
-
 
 export default {
 
@@ -381,81 +403,55 @@ export default {
     "fi" : tree => tree ,
   } ,
 
-  "cmddef" : {
+  "command-definition" : {
 
-    "{cmd}[x]{anything}": async ( tree , _ , { variables } ) => {
+    "{cmd}[nargs][default]{anything}": async ( tree , _ , { variables } ) => {
       const it = iter(tree.children) ;
       await next(it); // {
-      const othercmd = await next(it);
+      const othercmd = await next(it); // cmd
       const cmd = othercmd.buffer;
       await next(it); // }
-      const cmddefargs = await next(it);
-      let nargs = 0;
-      if (cmddefargs.production === 'yes') {
-	const it2 = iter(cmddefargs.children);
-	await next(it2) ; // [
-	const text = await next(it2) ;
-	nargs = parseInt(text.buffer, 10);
-	await next(it2) ; // ]
-      }
+      const parameters = await next(it); // [nargs][default]
+      const [ nargs , dflt ] = await parseDefinitionParameters( parameters ) ;
       await next(it); // {
       const anything = await next(it);
-      const blob = await ast.materialize(anything) ;
-      variables.get('cmd').set(cmd, [ nargs , null , blob ]);
+      const blob = await ast.materialize(anything) ; // anything
+      variables.get('cmd').set(cmd, [ nargs , dflt , blob ]);
       await next(it); // }
       return empty;
     } ,
 
-    "cmd[x]{anything}": async ( tree , _ , { variables } ) => {
+    "cmd[nargs][default]{anything}": async ( tree , _ , { variables } ) => {
       const it = iter(tree.children) ;
       const othercmd = await next(it);
       const cmd = othercmd.buffer;
-      const cmddefargs = await next(it);
-      let nargs = 0;
-      if (cmddefargs.production === 'yes') {
-	const it2 = iter(cmddefargs.children);
-	await next(it2) ; // [
-	const text = await next(it2) ;
-	nargs = parseInt(text.buffer, 10);
-	await next(it2) ; // ]
-      }
+      const parameters = await next(it); // [nargs][default]
+      const [ nargs , dflt ] = await parseDefinitionParameters( parameters ) ;
       await next(it); // {
       const anything = await next(it);
       const blob = await ast.materialize(anything) ;
-      variables.get('cmd').set(cmd, [ nargs , null ,blob ]);
+      variables.get('cmd').set(cmd, [ nargs , dflt ,blob ]);
       await next(it); // }
       return empty;
     } ,
 
-    "*cmd[x]{anything}": async ( tree , _ , { variables } ) => {
+    "*cmd[nargs][default]{anything}": async ( tree , _ , { variables } ) => {
       // do not know what to do with '*' at the moment
       // see https://tex.stackexchange.com/questions/1050/whats-the-difference-between-newcommand-and-newcommand
       const it = iter(tree.children) ;
       await next(it); // *
       const othercmd = await next(it);
       const cmd = othercmd.buffer;
-      const cmddefargs = await next(it);
-      let nargs = 0;
-      if (cmddefargs.production === 'yes') {
-	const it2 = iter(cmddefargs.children);
-	await next(it2) ; // [
-	const text = await next(it2) ;
-	nargs = parseInt(text.buffer, 10);
-	await next(it2) ; // ]
-      }
+      const parameters = await next(it); // [nargs][default]
+      const [ nargs , dflt ] = await parseDefinitionParameters( parameters ) ;
       await next(it); // {
       const anything = await next(it);
       const blob = await ast.materialize(anything) ;
-      variables.get('cmd').set(cmd, [ nargs , null ,blob ]);
+      variables.get('cmd').set(cmd, [ nargs , dflt ,blob ]);
       await next(it); // }
       return empty;
     } ,
 
-  } ,
-
-  "cmddefargs": {
-    "yes" : err( "cmddefargs" , "yes" ) ,
-    "no" : err( "cmddefargs" , "no" ) ,
   } ,
 
   "environment-definition" : {
@@ -469,26 +465,8 @@ export default {
       const env = envtext.buffer;
       await next(it); // }
       await next(it); // ignore
-      const args = await next(it); // [nargs][default]
-      let nargs = 0;
-      let dfltarg = null;
-      if (args.production === 'yes') {
-	const it2 = iter(args.children);
-	await next(it2) ; // [
-	const text = await next(it2) ;
-	nargs = parseInt(text.buffer, 10);
-	await next(it2) ; // ]
-
-	const dflt = await next(it2) ;
-	if ( dflt.production === 'yes' ) {
-	  const it3 = iter(dflt.children);
-	  await next(it3) ; // [
-	  const anything3 = await next(it3);
-	  dfltarg = await ast.materialize(anything3) ;
-	  await next(it3) ; // ]
-	}
-
-      }
+      const parameters = await next(it); // [nargs][default]
+      const [ nargs , dflt ] = await parseDefinitionParameters( parameters ) ;
       await next(it); // {
       const anything1 = await next(it);
       const begin = await ast.materialize(anything1) ;
@@ -498,68 +476,19 @@ export default {
       const anything2 = await next(it);
       const end = await ast.materialize(anything2) ;
       await next(it); // }
-      variables.get('env').set(env, [ nargs , dfltarg , begin , end ]);
+      variables.get('env').set(env, [ nargs , dflt , begin , end ]);
       return empty;
     } ,
-    //"{envname}[nargs][default]{begin}{end}" : recurse( 'environment-definition' , '{envname}[nargs][default]{begin}{end}' ) ,
     "*{envname}[nargs][default]{begin}{end}" : recurse( 'environment-definition' , '*{envname}[nargs][default]{begin}{end}' ) ,
   } ,
-  "arguments-for-environment-definition" : {
-    "yes" : recurse('arguments-for-environment-definition' , 'yes' ) ,
-    "no" : () => empty ,
+  "definition-parameters" : {
+    "yes" : err('definition-parameters' , 'yes' ) ,
+    "no" : err('definition-parameters' , 'no' ) ,
   } ,
-  "default-argument-for-environment-definition" : {
-    "yes" : recurse('default-argument-for-environment-definition' , 'yes' ) ,
-    "no" : () => empty ,
+  "default-argument-for-definition" : {
+    "yes" : err('default-argument-for-definition' , 'yes' ) ,
+    "no" : err('default-argument-for-definition' , 'no' ) ,
   } ,
-  //"envdef" : {
-    //"{envname}[nargs][default]{begin}{end}": async ( tree , _ , { variables } ) => {
-       //do not know what to do with '*' at the moment
-      //const it = iter(tree.children) ;
-      //await next(it); // *
-      //const envtext = await next(it);
-      //const env = envtext.buffer;
-      //const envdefargs = await next(it);
-      //let nargs = 0;
-      //let defaultarg = null;
-      //if (envdefargs.production === 'yes') {
-	//const it2 = iter(envdefargs.children);
-	//await next(it2) ; // [
-	//const text = await next(it2) ;
-	//nargs = parseInt(text.buffer, 10);
-	//await next(it2) ; // ]
-	//const envdefdefault = await next(it2) ;
-	//if (envdefdefault.production === 'yes') {
-	  //const it3 = iter(envdefdefault.children);
-	  //await next(it3) ; // [
-	  //const defaultargtree = await next(it2) ;
-	  //defaultarg = await ast.materialize(defaultargtree) ;
-	  //await next(it3) ; // ]
-	//}
-      //}
-      //await next(it); // {
-      //const begintree = await next(it);
-      //const begin = await ast.materialize(begintree) ;
-      //await next(it); // }
-      //await next(it); // {
-      //const endtree = await next(it);
-      //const end = await ast.materialize(endtree) ;
-      //variables.get('env').set(env, [ nargs , defaultarg , begin , end ]);
-      //await next(it); // }
-      //return empty;
-    //} ,
-    //"*{envname}[nargs][default]{begin}{end}": recurse("envdef", "*{envname}[nargs][default]{begin}{end}"),
-  //} ,
-
-  //"envdefargs": {
-    //"yes" : recurse( "envdefargs" , "yes" ) ,
-    //"no" : recurse( "envdefargs" , "no" ) ,
-  //} ,
-
-  //"envdefdefault": {
-    //"yes" : recurse( "envdefdefault" , "yes" ) ,
-    //"no" : recurse( "envdefdefault" , "no" ) ,
-  //} ,
 
   "cmd*": {
     "yes" : err( "cmd*" , "yes" ) ,
