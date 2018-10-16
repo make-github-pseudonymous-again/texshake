@@ -11,6 +11,8 @@ import {
 	shakestream ,
 } from '../../src' ;
 
+const LONG_SEQUENCE_SIZE = 100000 ;
+
 async function transform ( t , string , expected ) {
 	let output = '' ;
 	const out = { 'write' : buffer => output += buffer } ;
@@ -30,18 +32,20 @@ function throws ( t , string , expected ) {
 
 const immutable = async ( t , string ) => await transform( t , string , string ) ;
 
-async function immutableFile ( t , filepath ) {
+async function transformFile ( t , inputFilePath , outputFilePath ) {
 	const encoding = 'utf8' ;
-	const expected = fs.readFileSync(filepath, encoding);
+	const expected = fs.readFileSync(outputFilePath, encoding);
 
 	let output = '' ;
 	const out = { 'write' : buffer => output += buffer } ;
 
-	const readStream = fs.createReadStream( filepath, { encoding } ) ;
+	const readStream = fs.createReadStream( inputFilePath, { encoding } ) ;
 	await shakestream(readStream, out);
 
 	t.is(output, expected);
 }
+
+const immutableFile = async ( t , path ) => await transformFile( t , path , path ) ;
 
 transform.title = ( title , string , expected ) => title || `shakestring('${string}') === '${expected}'` ;
 
@@ -49,7 +53,9 @@ throws.title = ( title , string , expected ) => title || `throws('${string}') ~ 
 
 immutable.title = ( title , string ) => transform.title( title , string , string ) ;
 
-immutableFile.title = ( _ , filepath ) => `LaTeX file: ${filepath.replace(/\.tex$/, '').replace(/^.*\//, '')}` ;
+transformFile.title = ( _ , inputFilePath , outputFilePath ) => `Transformed LaTeX file: ${inputFilePath.replace(/\.tex$/, '').replace(/^.*\//, '')}` ;
+
+immutableFile.title = ( _ , filepath ) => `Immutable LaTeX file: ${filepath.replace(/\.tex$/, '').replace(/^.*\//, '')}` ;
 
 // Grammar should be LL1
 test( 'Grammar is LL1' , t => t.true(ll1.is(grammar)) ) ;
@@ -190,25 +196,34 @@ test( 'Unmatched closing curly brace at 3:2 throws' , throws , 'o\nbb\n }abc', /
 test( 'Unmatched closing curly brace at 3:3 throws' , throws , 'o\nccc\n  }abc', /3:3/) ;
 
 // a very long empty document (breaks recursive approaches)
-const spaces = (new Array(100000)).join(' ') ;
+const spaces = (new Array(LONG_SEQUENCE_SIZE)).join(' ') ;
 test( 'long sequence of spaces' , immutable , spaces ) ;
 
-const newlines = (new Array(100000)).join('\n') ;
+const newlines = (new Array(LONG_SEQUENCE_SIZE)).join('\n') ;
 test( 'long sequence of newlines' , immutable , newlines ) ;
 
 // immutable input files
-const filedir = 'test/data' ;
-const files = fs.readdirSync(filedir) ;
-for ( const filename of files ) test( immutableFile , `${filedir}/${filename}` ) ;
+const immutableFiledir = 'test/data/immutable' ;
+const immutableFiles = fs.readdirSync(immutableFiledir) ;
+for ( const filename of immutableFiles )
+test( immutableFile , `${immutableFiledir}/${filename}` ) ;
 
 // newenvironment
 test( immutable , '\\begin{theorem}\\dots\\end{theorem}' ) ;
-test( immutable , '\\begin{theorem}[Brol et al.~\cite{brol}]\\dots\\end{theorem}' ) ;
+test( immutable , '\\begin{theorem}[Brol et al.~\\cite{brol}]\\dots\\end{theorem}' ) ;
 
 test( transform , '\\newenvironment{test}[1][]{#1}{}\\begin{test}x\\end{test}' , 'x' ) ;
 test( transform , '\\renewenvironment{test}[1][]{#1}{}\\begin{test}x\\end{test}' , 'x' ) ;
 test( transform , '\\newenvironment{test}[1][]{#1}{}' , '' ) ;
 test( transform , '\\renewenvironment{test}[1][]{#1}{}' , '' ) ;
+
+// transformed input files
+const transformedFiledir = 'test/data/transform' ;
+const transformedInputFiledir = `${transformedFiledir}/input` ;
+const transformedOutputFiledir = `${transformedFiledir}/output` ;
+const transformedInputFiles = fs.readdirSync(transformedInputFiledir) ;
+for ( const filename of transformedInputFiles )
+test( transformFile , `${transformedInputFiledir}/${filename}` , `${transformedOutputFiledir}/${filename}` ) ;
 
 // argument escaping
 //test( transform , '\\newcommand\\x[1]{\\def\\#1[1]{##1}}\\x{test}' , '\\def\\test[1]{#1}' ) ;

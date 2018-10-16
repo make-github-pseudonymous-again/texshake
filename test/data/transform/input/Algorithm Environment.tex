@@ -1,0 +1,85 @@
+\documentclass{article}
+
+\newenvironment{steps}%
+{%
+\vspace{0.1cm}%
+\begin{adjustwidth}{0.3cm}{0cm}%
+\begin{description}%
+\setlength{\itemsep}{0pt}%
+\setlength{\parskip}{0pt}%
+\setlength{\parsep}{0pt}%
+}
+{%
+\end{description}%
+\end{adjustwidth}%
+\vspace{0.1cm}%
+}
+
+\newcounter{algorithm}[section]
+\renewcommand{\thealgorithm}{\arabic{section}.\arabic{algorithm}}%
+\newenvironment{algorithm}[1][]
+{\refstepcounter{algorithm}%
+ \par%
+ \vspace{.5\baselineskip\@plus.2\baselineskip\@minus.2\baselineskip}% Space above
+\noindent\textbf{Algorithm~\thealgorithm}\ifx&#1&\else~(#1)\fi\textbf{.}%
+ %\noindent\textbf{Algorithm}\ifx&#1&\else~(#1)\fi\textbf{.}%
+ \begin{steps}}%\begin{algorithm}
+{\end{steps}%
+%\vspace{.5\baselineskip\@plus.2\baselineskip\@minus.2\baselineskip}% Space below
+}% \end{algorithm}
+
+\begin{document}
+
+\dots
+
+\section{Nonuniform algorithm for explicit 3POL}%
+\label{sec:algo:explicit:nonuniform}
+
+We begin with the description of a nonuniform algorithm for explicit 3POL which
+we use later as a basis for other algorithms. We prove the following:
+\begin{theorem}\label{thm:explicit:act}
+	There is a bounded-degree ADT of depth
+	$O(n^{12/7+\varepsilon})$
+	for explicit 3POL\@.
+\end{theorem}
+
+\paragraph{Idea}
+We partition the sets $A$ and $B$ into small groups of consecutive
+elements. That way, we can divide the $A\times B$ grid into cells with the
+guarantee that each curve $c = f(x,y)$ intersects a small number
+of those cells. For each such curve and each cell it intersects, we
+search $c$ among the values $f(a,b)$ for all $(a,b)$ in a given intersected
+cell. We generalize Fredman's trick~\cite{F76} --- and how it is used in Gr\o
+nlund and Pettie's paper~\cite{GP14} --- to quickly obtain a sorted order on
+those values, which provides us a logarithmic search time for each cell.
+Below is a sketch of the algorithm.
+
+\begin{algorithm}[Nonuniform algorithm for explicit 3POL]\label{algo:ne}
+\item[input] $A = \{\,a_1 < \cdots < a_n\,\},B = \{\,b_1<\cdots<b_n\,\},
+    C = \{\,c_1<\cdots<c_n\,\}
+    \subset \mathbb{R}$.
+\item[output] \emph{accept} if $\exists\, (a,b,c) \in A \times B \times C$ such that $c
+    = f(a,b)$, \emph{reject} otherwise.%
+    \footnote{Note that it is easy to modify the algorithm to count or report the
+    solutions. In the latter case, the algorithm becomes output sensitive.}
+\item[1.] Partition the intervals $[a_1,a_n]$ and $[b_1,b_n]$ into blocks
+    $A_i^*$ and $B_j^*$ such that $A_i = A \cap A_i^*$ and $B_j = B
+    \cap B_j^*$ have size $g$.
+\item[2.] Sort the sets $f(A_i \times B_j) = \{\, f(a,b) \st (a,b) \in A_i
+    \times B_j\,\}$ for all $A_i,B_j$. This is the only step that
+    is nonuniform.
+\item[3.] For each $c \in C$,
+\item[3.1.] For each cell $A_i^* \times B_j^*$ intersected by the curve
+$c=f(x,y)$,
+\item[3.1.1.] Binary search for $c$ in the sorted set $f(A_i \times B_j)$.
+If $c$ is found, \emph{accept} and halt.
+\item[4.] \emph{reject} and halt.
+\end{algorithm}
+%
+Like in Gr\o nlund and Pettie's $\tilde{O}(n^{3/2})$ decision tree for
+3SUM~\cite{GP14}, the key is to give an efficient implementation
+of step~\textbf{2}.
+
+\dots
+
+\end{document}

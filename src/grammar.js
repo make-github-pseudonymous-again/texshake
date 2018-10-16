@@ -9,7 +9,8 @@ const productions = {
   } ,
   "anything" : {
     "starts-with-othercmd" : [ '&othercmd' , "&cmdafter" ] ,
-    "starts-with-environment" : [ "&begin-environment" , "&cmdafter", "&end-environment", "&anything" ] ,
+    "starts-with-begin-environment" : [ "&begin-environment" , "&cmdafter"] ,
+    "starts-with-end-environment" : [ "&end-environment" , "&anything" ] ,
     "starts-with-*" : [ '&*' , "&anything" ] ,
     "starts-with-[" : [ '&[' , "&anything" ] ,
     "starts-with-]" : [ '&]' , "&anything" ] ,
@@ -19,7 +20,8 @@ const productions = {
   } ,
   "anything-but-]" : {
     "starts-with-othercmd" : [ '&othercmd' , "&cmdafter-but-not-]" ] ,
-    "starts-with-environment" : [ "&begin-environment" , "&cmdafter-but-not-]", "&end-environment", "&anything-but-]"] ,
+    "starts-with-begin-environment" : [ "&begin-environment" , "&cmdafter-but-not-]" ] ,
+    "starts-with-end-environment" : [ "&end-environment" , "&anything-but-]" ] ,
     "starts-with-*" : [ '&*' , "&anything-but-]" ] ,
     "starts-with-[" : [ '&[' , "&anything-but-]" ] ,
     "starts-with-a-group" : [ '&group' , '&anything-but-]' ] ,
@@ -63,6 +65,7 @@ const productions = {
     "newenvironment" : [ '=newenvironment' , "&environment-definition" ] ,
     "renewenvironment" : [ '=renewenvironment' , "&environment-definition" ] ,
     "\n" : [ '=\n' ] ,
+    " " : [ '= ' ] ,
     "arg" : [ '=arg' ] , // 1.12
     "$" : [ '=$' ] ,
     "math" : [ '=\\(' , '&anything' , '=\\)' ] ,
@@ -82,11 +85,11 @@ const productions = {
     "no" : [ ] , // 4.1
   } ,
   "environment-definition" : {
-    "{envname}[nargs][default]{begin}{end}" : [ '={' , '=text' , '=}' , "&arguments-for-environment-definition" , '={' , "&anything" , '=}' , '={' , "&anything" , '=}' ] ,
+    "{envname}[nargs][default]{begin}{end}" : [ '={' , '=text' , '=}' , "&ignore" , "&arguments-for-environment-definition" , '={' , "&anything" , '=}' , "&ignore" , '={' , "&anything" , '=}' ] ,
     "*{envname}[nargs][default]{begin}{end}" : [ '=*' , '={' , '=text' , '=}' , "&arguments-for-environment-definition" , '={' , "&anything" , '=}' , '={' , "&anything" , '=}' ] ,
   } ,
   "arguments-for-environment-definition" : {
-    "yes" : [ '=[' , '=text' , '=]' , '&default-argument-for-environment-definition' ] ,
+    "yes" : [ '=[' , '=text' , '=]' , '&default-argument-for-environment-definition' , "&ignore" ] ,
     "no" : [ ] ,
   } ,
   "default-argument-for-environment-definition" : {
@@ -104,13 +107,23 @@ const productions = {
   } ,
   "cmdafter" : { // after othercmd
     "othercmd" : [ "&othercmd" , "&cmdafter" ] ,
+    "begin-environment" : [ "&begin-environment" , "&cmdafter"] ,
+    "end-environment" : [ "&end-environment" , "&anything" ] ,
     "]-then-anything" : [ "&]" , "&anything" ] ,
     "something-else-then-anything" : [ "&something-else" , "&anything" ] ,
     "nothing" : [ ] ,
   } ,
   "cmdafter-but-not-]" : { // after othercmd
     "othercmd" : [ "&othercmd" , "&cmdafter-but-not-]" ] ,
+    "begin-environment" : [ "&begin-environment" , "&cmdafter-but-not-]" ] ,
+    "end-environment" : [ "&end-environment" , "&anything-but-]" ] ,
     "something-else-then-anything" : [ "&something-else" , "&anything-but-]" ] ,
+    "nothing" : [ ] ,
+  } ,
+  "ignore" : {
+    "starts-with-a-space" : [ "= " , "&ignore" ] ,
+    "starts-with-a-newline" : [ "=\n" , "&ignore" ] ,
+    "starts-with-a-comment" : [ "=comment" , "&ignore" ] ,
     "nothing" : [ ] ,
   } ,
 } ;

@@ -24,6 +24,7 @@ export default async function shaketape ( inputTape , outputStream ) {
   ]) ;
 
   const ctx = {
+    env : [ ] ,
     args : [ ] ,
     variables ,
   } ;
