@@ -86,27 +86,25 @@ async function* _tokens ( tape ) {
       }
 
     }
-    else if ( c === '#' ) {
-      yield* flush();
-
-      // read arg number
-      let arg = '#' ;
-      while ( true ) {
-	const d = await tape.read();
-	if ( d === tape.eof ) break ;
-	else if ( d >= '0' && d <= '9' ) arg += d;
-	else {
-	  tape.unread(d);
-	  break;
-	}
-      }
-      if ( arg === '#' ) throw new Error('Incomplete #') ;
-      yield [ 'arg' , arg , new Position(line, position) ] ;
-      position += arg.length;
-    }
     else {
       switch ( c ) {
 
+	case '0':
+	case '1':
+	case '2':
+	case '3':
+	case '4':
+	case '5':
+	case '6':
+	case '7':
+	case '8':
+	case '9':
+	  yield* flush();
+	  yield [ 'digit' , c , new Position(line, position) ] ;
+	  ++position;
+	  break;
+
+	case '#':
 	case '{':
 	case '}':
 	case '[':

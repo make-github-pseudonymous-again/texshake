@@ -37,8 +37,8 @@ async function parseDefinitionParameters ( parameters ) {
   if (parameters.production === 'yes') {
     const it2 = iter(parameters.children);
     await next(it2) ; // [
-    const text = await next(it2) ;
-    nargs = parseInt(text.buffer, 10);
+    const digit = await next(it2) ;
+    nargs = parseInt(digit.buffer, 10);
     await next(it2) ; // ]
 
     const dfltparam = await next(it2) ;
@@ -60,6 +60,12 @@ const empty = {
   'nonterminal' : 'empty' ,
   'production' : 'main' ,
   'children' : [] ,
+} ;
+
+const hash = {
+  'type' : 'leaf' ,
+  'terminal' : '#' ,
+  'buffer' : '#' ,
 } ;
 
 const err = ( nonterminal , production ) => () => {
@@ -383,13 +389,23 @@ export default {
 
     " " : tree => tree ,
 
-    "arg": async ( tree , match , { args , variables } ) => {
-      const arg = await next(iter(tree.children)) ;
+    "digit" : tree => tree ,
+
+    "argument": async ( tree , match , { args , variables } ) => {
+      const it = iter(tree.children) ;
+      await next(it); // #
+      const nonterminal = await next(it); // # or digit
+      const arg = await next(iter(nonterminal.children)) ;
       if ( args.length < 2 ) throw new Error(`Requesting ${arg.buffer} but got no arguments in context.`) ;
-      const i = parseInt(arg.buffer.substr(1), 10) - 1; // #arg
-      if ( i >= args[1].length ) throw new Error(`Requesting ${arg.buffer} but only got ${args[1].length} arguments.`) ;
-      const subtree = args[1][i] ; // arg
-      return t( subtree , match , { args: args[0] , variables } ) ;
+      if (nonterminal.production === 'digit') {
+	const i = parseInt(arg.buffer, 10) - 1; // #arg
+	if ( i >= args[1].length ) throw new Error(`Requesting ${arg.buffer} but only got ${args[1].length} arguments.`) ;
+	const subtree = args[1][i] ; // arg
+	return t( subtree , match , { args: args[0] , variables } ) ;
+      }
+      else {
+	return hash ;
+      } ;
     } ,
 
     "$" : tree => tree ,
@@ -397,6 +413,11 @@ export default {
     "math" : recurse('something-else', 'math') ,
     "mathenv" : recurse('something-else', 'mathenv') ,
 
+  } ,
+
+  "argument-subject" : {
+    "#" : err("argument-subject", "#") ,
+    "digit" : err("argument-subject", "digit") ,
   } ,
 
   "endif": {

@@ -237,7 +237,7 @@ for ( const filename of transformedInputFiles )
 test( transformFile , `${transformedInputFiledir}/${filename}` , `${transformedOutputFiledir}/${filename}` ) ;
 
 // argument escaping
-//test( transform , '\\newcommand\\x[1]{\\def\\#1[1]{##1}}\\x{test}' , '\\def\\test[1]{#1}' ) ;
+test( transform , '\\newcommand\\x[1]{\\newcommand\\y[1]{#1 ##1}}\\x{test}\\y{1212}' , 'test 1212' ) ;
 
 // default arguments with newcommand and renewcommand
 test( transform , '\\newcommand{\\price}[2][17.5]{\\pounds #2 excl VAT @ #1\\%}\\price{100}' , '\\pounds 100 excl VAT @ 17.5\\%') ;
