@@ -22,12 +22,12 @@ async function transform ( t , string , expected ) {
 
 function throws ( t , string , expected ) {
 	const out = { 'write' : buffer => undefined } ;
-	//await t.throws(async () => await shakestring(string, out), expected);
-	return shakestring(string, out)
-		.then( () => t.fail() )
-		.catch( error => {
-			t.true(expected.test(error.message));
-		} ) ;
+	return t.throwsAsync(shakestring(string, out), expected);
+	//return shakestring(string, out)
+		//.then( () => t.fail() )
+		//.catch( error => {
+			//t.true(expected.test(error.message));
+		//} ) ;
 }
 
 const immutable = async ( t , string ) => await transform( t , string , string ) ;
@@ -238,6 +238,7 @@ test( transformFile , `${transformedInputFiledir}/${filename}` , `${transformedO
 
 // argument escaping
 test( transform , '\\newcommand\\x[1]{\\newcommand\\y[1]{#1 ##1}}\\x{test}\\y{1212}' , 'test 1212' ) ;
+test( throws , '\\def\\y{##1}\\newcommand\\x[1]{\\y}\\x{test}' , /no arguments in context/ ) ;
 
 // default arguments with newcommand and renewcommand
 test( transform , '\\newcommand{\\price}[2][17.5]{\\pounds #2 excl VAT @ #1\\%}\\price{100}' , '\\pounds 100 excl VAT @ 17.5\\%') ;
