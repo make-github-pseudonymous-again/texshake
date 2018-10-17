@@ -25,8 +25,8 @@ export default async function shaketape ( inputTape , outputStream ) {
 
   const ctx = {
     env : [ ] ,
-    args : [ ] ,
     variables ,
+    parser ,
   } ;
 
   const transformed = await ast.transform( tree , shaker , ctx ) ;

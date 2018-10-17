@@ -159,7 +159,15 @@ test( throws , '#' , /unexpected end of file/ ) ;
 test( throws , '#x' , /1:2/ ) ;
 
 // no arguments defined
-test( throws , '#1' , /no arguments in context/ ) ;
+test( throws , '#1' , /#1 without argument context/ ) ;
+test( throws , '#2' , /#2 without argument context/ ) ;
+test( throws , '#3' , /#3 without argument context/ ) ;
+test( throws , '#4' , /#4 without argument context/ ) ;
+test( throws , '#5' , /#5 without argument context/ ) ;
+test( throws , '#6' , /#6 without argument context/ ) ;
+test( throws , '#7' , /#7 without argument context/ ) ;
+test( throws , '#8' , /#8 without argument context/ ) ;
+test( throws , '#9' , /#9 without argument context/ ) ;
 
 // escaped #
 test( immutable , '\\#' ) ;
@@ -238,7 +246,7 @@ test( transformFile , `${transformedInputFiledir}/${filename}` , `${transformedO
 
 // argument escaping
 test( transform , '\\newcommand\\x[1]{\\newcommand\\y[1]{#1 ##1}}\\x{test}\\y{1212}' , 'test 1212' ) ;
-test( throws , '\\def\\y{##1}\\newcommand\\x[1]{\\y}\\x{test}' , /no arguments in context/ ) ;
+test( throws , '\\def\\y{##1}\\newcommand\\x[1]{\\y}\\x{test}' , /#1 without argument context/ ) ;
 
 // default arguments with newcommand and renewcommand
 test( transform , '\\newcommand{\\price}[2][17.5]{\\pounds #2 excl VAT @ #1\\%}\\price{100}' , '\\pounds 100 excl VAT @ 17.5\\%') ;

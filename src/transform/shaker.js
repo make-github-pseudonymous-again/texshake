@@ -1,5 +1,6 @@
 import { StopIteration } from '@aureooms/js-itertools' ;
 import { ast } from '@aureooms/js-grammar' ;
+import tape from '@aureooms/js-tape' ;
 
 import visitor from './visitor' ;
 
@@ -86,7 +87,7 @@ function extend ( transform, extension ) {
   return result ;
 }
 
-export default extend( visitor , {
+const optimizedVisitor = extend( visitor , {
 
   "anything" : {
     "end" : () => empty ,
@@ -95,6 +96,98 @@ export default extend( visitor , {
   "anything-but-]" : {
     "end" : () => empty ,
   } ,
+
+  "*" : {
+    "*" : tree => tree ,
+  } ,
+
+  "[" : {
+    "[" : tree => tree ,
+  } ,
+
+  "]" : {
+    "]" : tree => tree ,
+  } ,
+
+  "something-else" : {
+
+    "text" : tree => tree ,
+
+    "\n" : tree => tree ,
+
+    " " : tree => tree ,
+
+    "digit" : tree => tree ,
+
+    "$" : tree => tree ,
+
+  } ,
+
+  "cmdargs": {
+    "end" : () => empty ,
+  } ,
+
+  "cmdafter": {
+    "nothing" : () => empty ,
+  } ,
+
+  "cmdafter-but-not-]": {
+    "nothing" : () => empty ,
+  } ,
+
+  "endif": {
+    "fi" : tree => tree ,
+  } ,
+
+} ) ;
+
+const expandArguments = extend( optimizedVisitor , {
+  "something-else": {
+    "argument": async ( tree , match , { args } ) => {
+      const it = iter(tree.children) ;
+      await next(it); // #
+      const nonterminal = await next(it); // # or digit
+      const arg = await next(iter(nonterminal.children)) ;
+      if (nonterminal.production === '#') return hash ; // this and next line could be moved one line up
+      const i = parseInt(arg.buffer, 10) - 1; // #arg
+      if ( i >= args.length ) throw new Error(`Requesting ${arg.buffer} but only got ${args.length} arguments.`) ;
+      const subtree = args[i] ;
+      return subtree ;
+    } ,
+  } ,
+
+  "argument-subject" : {
+    "#" : err("argument-subject", "#") ,
+    "digit" : err("argument-subject", "digit") ,
+  } ,
+
+} ) ;
+
+function parseArguments ( args , dfltarg , type , name ) {
+
+  const cmdargs = [];
+  let arg_i = args
+  if ( arg_i.production === 'optional' ) {
+    if (dfltarg === null) throw new Error(`${type} ${name} is not defined with a default argument.`) ;
+    const [ optgroup , tail ] = arg_i.children ;
+    const [ _open , arg , _close ] = optgroup.children ;
+    cmdargs.push(arg);
+    arg_i = tail ;
+  }
+  else if (dfltarg !== null) cmdargs.push(dfltarg) ;
+  while ( arg_i.production === 'normal' ) {
+    const [ group , tail ] = arg_i.children ;
+    const [ _open , arg , _close ] = group.children ;
+    cmdargs.push(arg) ;
+    arg_i = tail ;
+  }
+  const complex = arg_i.production === 'optional' ;
+
+  return [ complex , cmdargs ] ;
+
+}
+
+export default extend( optimizedVisitor , {
 
   "othercmd" : {
 
@@ -113,27 +206,18 @@ export default extend( visitor , {
       if ( ctx.variables.get('cmd').has(cmd) ) {
 
 	const [ nargs , dfltarg , expandsto ] = ctx.variables.get('cmd').get(cmd) ;
-	const cmdargs = [];
-	let arg_i = args
-	if ( arg_i.production === 'optional' ) {
-	  if (dfltarg === null) throw new Error(`Command ${cmd} is not defined with a default argument.`) ;
-	  const [ optgroup , tail ] = arg_i.children ;
-	  const [ _open , arg , _close ] = optgroup.children ;
-	  cmdargs.push(arg);
-	  arg_i = tail ;
-	}
-	else if (dfltarg !== null) cmdargs.push(dfltarg) ;
-	while ( arg_i.production === 'normal' ) {
-	  const [ group , tail ] = arg_i.children ;
-	  const [ _open , arg , _close ] = group.children ;
-	  cmdargs.push(arg) ;
-	  arg_i = tail ;
-	}
-	const complex = arg_i.production === 'optional' ;
+
+	const [ complex , cmdargs ] = parseArguments( args , dfltarg , 'Command' , cmd ) ;
+
 	if (!complex) {
 	  // do not parse complex syntax
 	  if (cmdargs.length !== nargs) throw new Error(`Command ${cmd} is defined with ${nargs} arguments but ${cmdargs.length} were given.`) ;
-	  return t( expandsto , match , { env: ctx.env, variables: ctx.variables , args: [ ctx.args , cmdargs ] } ) ;
+
+	  const withArguments = await t( expandsto , expandArguments , { args: cmdargs } )
+	  const flat = ast.flatten(withArguments) ;
+	  const tokensTape = tape.fromAsyncIterable(flat);
+	  const subtree = (await ast.materialize(ctx.parser.parse(tokensTape))).children[0] ;
+	  return t( subtree , match , ctx ) ;
 	}
 
       }
@@ -170,31 +254,20 @@ export default extend( visitor , {
 
 	const [ nargs , dfltarg , begin , end ] = ctx.variables.get('env').get(env) ;
 
-	const cmdargs = [];
-	let arg_i = args
-	if ( arg_i.production === 'optional' ) {
-	  if (dfltarg === null) throw new Error(`Environment ${env} is not defined with a default argument.`) ;
-	  const [ optgroup , tail ] = arg_i.children ;
-	  const [ _open , arg , _close ] = optgroup.children ;
-	  cmdargs.push(arg);
-	  arg_i = tail ;
-	}
-	else if (dfltarg !== null) cmdargs.push(dfltarg) ;
-	while ( arg_i.production === 'normal' ) {
-	  const [ group , tail ] = arg_i.children ;
-	  const [ _open , arg , _close ] = group.children ;
-	  cmdargs.push(arg) ;
-	  arg_i = tail ;
-	}
+	const [ complex , cmdargs ] = parseArguments( args , dfltarg , 'Environment' , env ) ;
 
-	const complex = arg_i.production === 'optional' ;
 	if (!complex) {
 	  envStackEntry.expand = true ;
 	  envStackEntry.args = cmdargs ;
 	  // do not parse complex syntax
 	  if (cmdargs.length !== nargs)
 	    throw new Error(`Environment ${env} is defined with ${nargs} arguments but ${cmdargs.length} were given.`) ;
-	  return t( begin , match , { env: envStackEntry.children , variables: ctx.variables , args: [ ctx.args , cmdargs ] } ) ;
+
+	  const withArguments = await t( begin , expandArguments , { args: cmdargs } )
+	  const flat = ast.flatten(withArguments) ;
+	  const tokensTape = tape.fromAsyncIterable(flat);
+	  const subtree = (await ast.materialize(ctx.parser.parse(tokensTape))).children[0] ;
+	  return t( subtree , match , { env: envStackEntry.children , variables: ctx.variables , parser: ctx.parser } ) ;
 	}
 
       }
@@ -226,14 +299,18 @@ export default extend( visitor , {
 	throw new Error(`Trying to end environment on an empty stack with \\end{${env}} (matching \\begin{${env}} is missing).`);
       }
 
-      const { expand , env: currentEnv , children , args } = ctx.env.pop();
+      const { expand , env: currentEnv , children , args: cmdargs } = ctx.env.pop();
 
       if ( currentEnv !== env ) {
 	throw new Error(`Trying to match \\begin{${currentEnv}} with \\end{${env}}.`);
       }
       else if (expand) {
 	const [ nargs , defaultarg , begin , end ] = ctx.variables.get('env').get(env) ;
-	return t( end , match , { env: children , variables: ctx.variables , args: [ ctx.args , args ] } ) ;
+	const withArguments = await t( end , expandArguments , { args: cmdargs } )
+	const flat = ast.flatten(withArguments) ;
+	const tokensTape = tape.fromAsyncIterable(flat);
+	const subtree = (await ast.materialize(ctx.parser.parse(tokensTape))).children[0] ;
+	return t( subtree , match , { env: children , variables: ctx.variables , parser: ctx.parser } ) ;
       }
       else {
 	return {
@@ -247,23 +324,15 @@ export default extend( visitor , {
 
   } ,
 
-  "*" : {
-    "*" : tree => tree ,
-  } ,
-
-  "[" : {
-    "[" : tree => tree ,
-  } ,
-
-  "]" : {
-    "]" : tree => tree ,
-  } ,
-
   "something-else" : {
 
-    "text" : tree => tree ,
-
     "newif": () => empty ,
+
+    "comment": ( ) => ({
+      'type' : 'leaf' ,
+      'terminal' : 'comment' ,
+      'buffer' : '%' ,
+    }) ,
 
     "ifcmd": async ( tree , match , ctx ) => {
 
@@ -311,12 +380,6 @@ export default extend( visitor , {
       return empty;
     } ,
 
-    "comment": ( ) => ({
-      'type' : 'leaf' ,
-      'terminal' : 'comment' ,
-      'buffer' : '%' ,
-    }) ,
-
     "def": async ( tree , match , { variables } ) => {
       const it = iter(tree.children) ;
       await next(it) ; // \def
@@ -358,40 +421,16 @@ export default extend( visitor , {
       return t( envdef , match , ctx ) ;
     } ,
 
-    "\n" : tree => tree ,
-
-    " " : tree => tree ,
-
-    "digit" : tree => tree ,
-
-    "argument": async ( tree , match , { args , variables } ) => {
-      const it = iter(tree.children) ;
-      await next(it); // #
-      const nonterminal = await next(it); // # or digit
-      const arg = await next(iter(nonterminal.children)) ;
-      if ( args.length < 2 ) throw new Error(`Requesting ${arg.buffer} but got no arguments in context.`) ;
-      if (nonterminal.production === 'digit') {
-	const i = parseInt(arg.buffer, 10) - 1; // #arg
-	if ( i >= args[1].length ) throw new Error(`Requesting ${arg.buffer} but only got ${args[1].length} arguments.`) ;
-	const subtree = args[1][i] ; // arg
-	return t( subtree , match , { args: args[0] , variables } ) ;
-      }
-      else {
-	return hash ;
-      } ;
-    } ,
-
-    "$" : tree => tree ,
-
   } ,
 
   "argument-subject" : {
-    "#" : err("argument-subject", "#") ,
-    "digit" : err("argument-subject", "digit") ,
-  } ,
-
-  "endif": {
-    "fi" : tree => tree ,
+    "#" : () => {
+      throw new Error('Escaped hash (##) without argument context.') ;
+    } ,
+    "digit" : async tree => {
+      const digit = await next(iter(tree.children)) ;
+      throw new Error(`Requesting #${digit.buffer} without argument context.`) ;
+    } ,
   } ,
 
   "command-definition" : {
@@ -483,18 +522,6 @@ export default extend( visitor , {
   "cmd*": {
     "yes" : err( "cmd*" , "yes" ) ,
     "no" : err( "cmd*" , "no" ) ,
-  } ,
-
-  "cmdargs": {
-    "end" : () => empty ,
-  } ,
-
-  "cmdafter": {
-    "nothing" : () => empty ,
-  } ,
-
-  "cmdafter-but-not-]": {
-    "nothing" : () => empty ,
   } ,
 
   "ignore" : {
