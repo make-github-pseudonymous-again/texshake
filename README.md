@@ -93,4 +93,4 @@ The tokens are produced according to
 [this file](https://github.com/aureooms/texshake/blob/master/src/tokens.js)
 and
 the shaking logic lies in
-[this file](https://github.com/aureooms/texshake/blob/master/src/shaker.js).
+[this file](https://github.com/aureooms/texshake/blob/master/src/transform/shaker.js).
