@@ -159,6 +159,7 @@ test( throws , '#' , /unexpected end of file/ ) ;
 test( throws , '#x' , /1:2/ ) ;
 
 // no arguments defined
+test( throws , '##' , /Escaped hash \(##\) without argument context/ ) ;
 test( throws , '#1' , /#1 without argument context/ ) ;
 test( throws , '#2' , /#2 without argument context/ ) ;
 test( throws , '#3' , /#3 without argument context/ ) ;
