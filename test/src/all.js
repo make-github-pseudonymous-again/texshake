@@ -155,8 +155,8 @@ test( 'Complex displaymath environment (matrix)' , immutable , '\\begin{displaym
 test( 'Escaped newline' , immutable , 'a\\\nb' ) ;
 
 // incomplete arg number
-test( throws , '#' , /Incomplete #/ ) ;
-test( throws , '#x' , /Incomplete #/ ) ;
+test( throws , '#' , /unexpected end of file/ ) ;
+test( throws , '#x' , /1:2/ ) ;
 
 // no arguments defined
 test( throws , '#1' , /no arguments in context/ ) ;
