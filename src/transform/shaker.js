@@ -81,7 +81,7 @@ const m = ( children , match , ctx ) => cmap( async child => await t( child , ma
 function extend ( transform, extension ) {
   const result = { } ;
   for ( const key in transform ) {
-    result[key] = Object.assign(extension[key] || {}, Object.assign(transform[key], {})) ;
+    result[key] = Object.assign({}, transform[key], extension[key]) ;
   }
   return result ;
 }
