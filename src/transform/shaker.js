@@ -1,6 +1,8 @@
 import { StopIteration } from '@aureooms/js-itertools' ;
 import { ast } from '@aureooms/js-grammar' ;
 
+import visitor from './visitor' ;
+
 // TODO create library with those
 function iter ( object ) {
   // maybe we do not even need the second case
@@ -73,54 +75,25 @@ const err = ( nonterminal , production ) => () => {
 } ;
 
 const t = ast.transform ;
-//const t = ( tree , match , ctx ) => {
-  //console.log(tree);
-  //return ast.transform( tree , match , ctx ) ;
-//} ;
-const m = ( children , match , ctx ) => ast.cmap( async child => await t( child , match , ctx ) , children ) ;
+const cmap = ast.cmap ;
+const m = ( children , match , ctx ) => cmap( async child => await t( child , match , ctx ) , children ) ;
 
-const recurse = ( nonterminal , production ) => ( tree , match , ctx ) => ({
-  "type" : "node" ,
-  nonterminal ,
-  production ,
-  "children" : ast.cmap( async x => x.type === 'leaf' ? x : await t( x , match , ctx ) , tree.children ) ,
-}) ;
+function extend ( transform, extension ) {
+  const result = { } ;
+  for ( const key in transform ) {
+    result[key] = Object.assign(extension[key] || {}, Object.assign(transform[key], {})) ;
+  }
+  return result ;
+}
 
-export default {
-
-  "document" : {
-    "contents" : recurse( 'document' , 'contents' ) ,
-  } ,
+export default extend( visitor , {
 
   "anything" : {
-    "starts-with-othercmd" : recurse( 'anything' , 'starts-with-othercmd' ) ,
-    "starts-with-begin-environment" : recurse( 'anything' , 'starts-with-begin-environment' ) ,
-    "starts-with-end-environment" : recurse( 'anything' , 'starts-with-end-environment' ) ,
-    "starts-with-*" : recurse( 'anything' , 'starts-with-*' ) ,
-    "starts-with-[" : recurse( 'anything' , 'starts-with-[' ) ,
-    "starts-with-]" : recurse( 'anything' , 'starts-with-]' ) ,
-    "starts-with-a-group" : recurse( 'anything' , 'starts-with-a-group' ) ,
-    "starts-with-something-else" : recurse( 'anything' , 'starts-with-something-else' ) ,
     "end" : () => empty ,
   } ,
 
   "anything-but-]" : {
-    "starts-with-othercmd" : recurse( 'anything-but-]' , 'starts-with-othercmd' ) ,
-    "starts-with-begin-environment" : recurse( 'anything-but-]' , 'starts-with-begin-environment' ) ,
-    "starts-with-end-environment" : recurse( 'anything-but-]' , 'starts-with-end-environment' ) ,
-    "starts-with-*" : recurse( 'anything-but-]' , 'starts-with-*' ) ,
-    "starts-with-[" : recurse( 'anything-but-]' , 'starts-with-[' ) ,
-    "starts-with-a-group" : recurse( 'anything-but-]' , 'starts-with-a-group' ) ,
-    "starts-with-something-else" : recurse( 'anything-but-]' , 'starts-with-something-else' ) ,
     "end" : () => empty ,
-  } ,
-
-  "group" : {
-    "group" : recurse('group', 'group') ,
-  } ,
-
-  "optgroup" : {
-    "group" : recurse('optgroup', 'group') ,
   } ,
 
   "othercmd" : {
@@ -410,9 +383,6 @@ export default {
 
     "$" : tree => tree ,
 
-    "math" : recurse('something-else', 'math') ,
-    "mathenv" : recurse('something-else', 'mathenv') ,
-
   } ,
 
   "argument-subject" : {
@@ -421,7 +391,6 @@ export default {
   } ,
 
   "endif": {
-    "elsefi" : recurse( 'endif', 'elsefi' ) ,
     "fi" : tree => tree ,
   } ,
 
@@ -501,7 +470,6 @@ export default {
       variables.get('env').set(env, [ nargs , dflt , begin , end ]);
       return empty;
     } ,
-    "*{envname}[nargs][default]{begin}{end}" : recurse( 'environment-definition' , '*{envname}[nargs][default]{begin}{end}' ) ,
   } ,
   "definition-parameters" : {
     "yes" : err('definition-parameters' , 'yes' ) ,
@@ -518,25 +486,14 @@ export default {
   } ,
 
   "cmdargs": {
-    "normal" : recurse('cmdargs', 'normal') ,
-    "optional" : recurse('cmdargs', 'optional') ,
     "end" : () => empty ,
   } ,
 
   "cmdafter": {
-    "othercmd" : recurse('cmdafter', 'othercmd' ) ,
-    "begin-environment" : recurse('cmdafter', 'begin-environment' ) ,
-    "end-environment" : recurse('cmdafter', 'end-environment' ) ,
-    "something-else-then-anything" : recurse('cmdafter', 'something-else-then-anything' ) ,
-    "]-then-anything" : recurse('cmdafter', ']-then-anything' ) ,
     "nothing" : () => empty ,
   } ,
 
   "cmdafter-but-not-]": {
-    "othercmd" : recurse('cmdafter-but-not-]', 'othercmd' ) ,
-    "begin-environment" : recurse('cmdafter-but-not-]', 'begin-environment' ) ,
-    "end-environment" : recurse('cmdafter-but-not-]', 'end-environment' ) ,
-    "something-else-then-anything" : recurse('cmdafter-but-not-]', 'something-else-then-anything' ) ,
     "nothing" : () => empty ,
   } ,
 
@@ -547,4 +504,4 @@ export default {
     "nothing" : err('ignore', 'nothing') ,
   } ,
 
-} ;
+} ) ;

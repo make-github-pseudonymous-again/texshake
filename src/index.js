@@ -5,6 +5,7 @@ import shakestream from './shakestream' ;
 import shakestring from './shakestring' ;
 import shaketape from './shaketape' ;
 import tokens from './tokens' ;
+import transform from './transform' ;
 
 export default {
 	Position ,
@@ -14,6 +15,7 @@ export default {
 	shakestring ,
 	shaketape ,
 	tokens ,
+	transform ,
 } ;
 
 export {
@@ -24,4 +26,5 @@ export {
 	shakestring ,
 	shaketape ,
 	tokens ,
+	transform ,
 } ;
