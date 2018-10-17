@@ -1,5 +1,8 @@
 import { StopIteration } from '@aureooms/js-itertools' ;
 import { ast } from '@aureooms/js-grammar' ;
+import tape from '@aureooms/js-tape' ;
+
+import visitor from './visitor' ;
 
 // TODO create library with those
 function iter ( object ) {
@@ -37,8 +40,8 @@ async function parseDefinitionParameters ( parameters ) {
   if (parameters.production === 'yes') {
     const it2 = iter(parameters.children);
     await next(it2) ; // [
-    const text = await next(it2) ;
-    nargs = parseInt(text.buffer, 10);
+    const digit = await next(it2) ;
+    nargs = parseInt(digit.buffer, 10);
     await next(it2) ; // ]
 
     const dfltparam = await next(it2) ;
@@ -62,60 +65,129 @@ const empty = {
   'children' : [] ,
 } ;
 
+const hash = {
+  'type' : 'leaf' ,
+  'terminal' : '#' ,
+  'buffer' : '#' ,
+} ;
+
 const err = ( nonterminal , production ) => () => {
   throw new Error(`${nonterminal}.${production} should have been handled before`);
 } ;
 
 const t = ast.transform ;
-//const t = ( tree , match , ctx ) => {
-  //console.log(tree);
-  //return ast.transform( tree , match , ctx ) ;
-//} ;
-const m = ( children , match , ctx ) => ast.cmap( async child => await t( child , match , ctx ) , children ) ;
+const cmap = ast.cmap ;
+const m = ( children , match , ctx ) => cmap( async child => await t( child , match , ctx ) , children ) ;
 
-const recurse = ( nonterminal , production ) => ( tree , match , ctx ) => ({
-  "type" : "node" ,
-  nonterminal ,
-  production ,
-  "children" : ast.cmap( async x => x.type === 'leaf' ? x : await t( x , match , ctx ) , tree.children ) ,
-}) ;
+function extend ( transform, extension ) {
+  const result = { } ;
+  for ( const key in transform ) {
+    result[key] = Object.assign({}, transform[key], extension[key]) ;
+  }
+  return result ;
+}
 
-export default {
-
-  "document" : {
-    "contents" : recurse( 'document' , 'contents' ) ,
-  } ,
+const optimizedVisitor = extend( visitor , {
 
   "anything" : {
-    "starts-with-othercmd" : recurse( 'anything' , 'starts-with-othercmd' ) ,
-    "starts-with-begin-environment" : recurse( 'anything' , 'starts-with-begin-environment' ) ,
-    "starts-with-end-environment" : recurse( 'anything' , 'starts-with-end-environment' ) ,
-    "starts-with-*" : recurse( 'anything' , 'starts-with-*' ) ,
-    "starts-with-[" : recurse( 'anything' , 'starts-with-[' ) ,
-    "starts-with-]" : recurse( 'anything' , 'starts-with-]' ) ,
-    "starts-with-a-group" : recurse( 'anything' , 'starts-with-a-group' ) ,
-    "starts-with-something-else" : recurse( 'anything' , 'starts-with-something-else' ) ,
     "end" : () => empty ,
   } ,
 
   "anything-but-]" : {
-    "starts-with-othercmd" : recurse( 'anything-but-]' , 'starts-with-othercmd' ) ,
-    "starts-with-begin-environment" : recurse( 'anything-but-]' , 'starts-with-begin-environment' ) ,
-    "starts-with-end-environment" : recurse( 'anything-but-]' , 'starts-with-end-environment' ) ,
-    "starts-with-*" : recurse( 'anything-but-]' , 'starts-with-*' ) ,
-    "starts-with-[" : recurse( 'anything-but-]' , 'starts-with-[' ) ,
-    "starts-with-a-group" : recurse( 'anything-but-]' , 'starts-with-a-group' ) ,
-    "starts-with-something-else" : recurse( 'anything-but-]' , 'starts-with-something-else' ) ,
     "end" : () => empty ,
   } ,
 
-  "group" : {
-    "group" : recurse('group', 'group') ,
+  "*" : {
+    "*" : tree => tree ,
   } ,
 
-  "optgroup" : {
-    "group" : recurse('optgroup', 'group') ,
+  "[" : {
+    "[" : tree => tree ,
   } ,
+
+  "]" : {
+    "]" : tree => tree ,
+  } ,
+
+  "something-else" : {
+
+    "text" : tree => tree ,
+
+    "\n" : tree => tree ,
+
+    " " : tree => tree ,
+
+    "digit" : tree => tree ,
+
+    "$" : tree => tree ,
+
+  } ,
+
+  "cmdargs": {
+    "end" : () => empty ,
+  } ,
+
+  "cmdafter": {
+    "nothing" : () => empty ,
+  } ,
+
+  "cmdafter-but-not-]": {
+    "nothing" : () => empty ,
+  } ,
+
+  "endif": {
+    "fi" : tree => tree ,
+  } ,
+
+} ) ;
+
+const expandArguments = extend( optimizedVisitor , {
+  "something-else": {
+    "argument": async ( tree , match , { args } ) => {
+      const it = iter(tree.children) ;
+      await next(it); // #
+      const nonterminal = await next(it); // # or digit
+      const arg = await next(iter(nonterminal.children)) ;
+      if (nonterminal.production === '#') return hash ; // this and next line could be moved one line up
+      const i = parseInt(arg.buffer, 10) - 1; // #arg
+      if ( i >= args.length ) throw new Error(`Requesting ${arg.buffer} but only got ${args.length} arguments.`) ;
+      const subtree = args[i] ;
+      return subtree ;
+    } ,
+  } ,
+
+  "argument-subject" : {
+    "#" : err("argument-subject", "#") ,
+    "digit" : err("argument-subject", "digit") ,
+  } ,
+
+} ) ;
+
+function parseArguments ( args , dfltarg , type , name ) {
+
+  const cmdargs = [];
+  let arg_i = args
+  if ( arg_i.production === 'optional' ) {
+    if (dfltarg === null) throw new Error(`${type} ${name} is not defined with a default argument.`) ;
+    const [ optgroup , tail ] = arg_i.children ;
+    const [ _open , arg , _close ] = optgroup.children ;
+    cmdargs.push(arg);
+    arg_i = tail ;
+  }
+  else if (dfltarg !== null) cmdargs.push(dfltarg) ;
+  while ( arg_i.production === 'normal' ) {
+    const [ group , tail ] = arg_i.children ;
+    const [ _open , arg , _close ] = group.children ;
+    cmdargs.push(arg) ;
+    arg_i = tail ;
+  }
+  const complex = arg_i.production === 'optional' ;
+
+  return [ complex , cmdargs ] ;
+
+}
+
+export default extend( optimizedVisitor , {
 
   "othercmd" : {
 
@@ -134,27 +206,18 @@ export default {
       if ( ctx.variables.get('cmd').has(cmd) ) {
 
 	const [ nargs , dfltarg , expandsto ] = ctx.variables.get('cmd').get(cmd) ;
-	const cmdargs = [];
-	let arg_i = args
-	if ( arg_i.production === 'optional' ) {
-	  if (dfltarg === null) throw new Error(`Command ${cmd} is not defined with a default argument.`) ;
-	  const [ optgroup , tail ] = arg_i.children ;
-	  const [ _open , arg , _close ] = optgroup.children ;
-	  cmdargs.push(arg);
-	  arg_i = tail ;
-	}
-	else if (dfltarg !== null) cmdargs.push(dfltarg) ;
-	while ( arg_i.production === 'normal' ) {
-	  const [ group , tail ] = arg_i.children ;
-	  const [ _open , arg , _close ] = group.children ;
-	  cmdargs.push(arg) ;
-	  arg_i = tail ;
-	}
-	const complex = arg_i.production === 'optional' ;
+
+	const [ complex , cmdargs ] = parseArguments( args , dfltarg , 'Command' , cmd ) ;
+
 	if (!complex) {
 	  // do not parse complex syntax
 	  if (cmdargs.length !== nargs) throw new Error(`Command ${cmd} is defined with ${nargs} arguments but ${cmdargs.length} were given.`) ;
-	  return t( expandsto , match , { env: ctx.env, variables: ctx.variables , args: [ ctx.args , cmdargs ] } ) ;
+
+	  const withArguments = await t( expandsto , expandArguments , { args: cmdargs } )
+	  const flat = ast.flatten(withArguments) ;
+	  const tokensTape = tape.fromAsyncIterable(flat);
+	  const subtree = (await ast.materialize(ctx.parser.parse(tokensTape))).children[0] ;
+	  return t( subtree , match , ctx ) ;
 	}
 
       }
@@ -191,31 +254,20 @@ export default {
 
 	const [ nargs , dfltarg , begin , end ] = ctx.variables.get('env').get(env) ;
 
-	const cmdargs = [];
-	let arg_i = args
-	if ( arg_i.production === 'optional' ) {
-	  if (dfltarg === null) throw new Error(`Environment ${env} is not defined with a default argument.`) ;
-	  const [ optgroup , tail ] = arg_i.children ;
-	  const [ _open , arg , _close ] = optgroup.children ;
-	  cmdargs.push(arg);
-	  arg_i = tail ;
-	}
-	else if (dfltarg !== null) cmdargs.push(dfltarg) ;
-	while ( arg_i.production === 'normal' ) {
-	  const [ group , tail ] = arg_i.children ;
-	  const [ _open , arg , _close ] = group.children ;
-	  cmdargs.push(arg) ;
-	  arg_i = tail ;
-	}
+	const [ complex , cmdargs ] = parseArguments( args , dfltarg , 'Environment' , env ) ;
 
-	const complex = arg_i.production === 'optional' ;
 	if (!complex) {
 	  envStackEntry.expand = true ;
 	  envStackEntry.args = cmdargs ;
 	  // do not parse complex syntax
 	  if (cmdargs.length !== nargs)
 	    throw new Error(`Environment ${env} is defined with ${nargs} arguments but ${cmdargs.length} were given.`) ;
-	  return t( begin , match , { env: envStackEntry.children , variables: ctx.variables , args: [ ctx.args , cmdargs ] } ) ;
+
+	  const withArguments = await t( begin , expandArguments , { args: cmdargs } )
+	  const flat = ast.flatten(withArguments) ;
+	  const tokensTape = tape.fromAsyncIterable(flat);
+	  const subtree = (await ast.materialize(ctx.parser.parse(tokensTape))).children[0] ;
+	  return t( subtree , match , { env: envStackEntry.children , variables: ctx.variables , parser: ctx.parser } ) ;
 	}
 
       }
@@ -247,14 +299,18 @@ export default {
 	throw new Error(`Trying to end environment on an empty stack with \\end{${env}} (matching \\begin{${env}} is missing).`);
       }
 
-      const { expand , env: currentEnv , children , args } = ctx.env.pop();
+      const { expand , env: currentEnv , children , args: cmdargs } = ctx.env.pop();
 
       if ( currentEnv !== env ) {
 	throw new Error(`Trying to match \\begin{${currentEnv}} with \\end{${env}}.`);
       }
       else if (expand) {
 	const [ nargs , defaultarg , begin , end ] = ctx.variables.get('env').get(env) ;
-	return t( end , match , { env: children , variables: ctx.variables , args: [ ctx.args , args ] } ) ;
+	const withArguments = await t( end , expandArguments , { args: cmdargs } )
+	const flat = ast.flatten(withArguments) ;
+	const tokensTape = tape.fromAsyncIterable(flat);
+	const subtree = (await ast.materialize(ctx.parser.parse(tokensTape))).children[0] ;
+	return t( subtree , match , { env: children , variables: ctx.variables , parser: ctx.parser } ) ;
       }
       else {
 	return {
@@ -268,23 +324,15 @@ export default {
 
   } ,
 
-  "*" : {
-    "*" : tree => tree ,
-  } ,
-
-  "[" : {
-    "[" : tree => tree ,
-  } ,
-
-  "]" : {
-    "]" : tree => tree ,
-  } ,
-
   "something-else" : {
 
-    "text" : tree => tree ,
-
     "newif": () => empty ,
+
+    "comment": ( ) => ({
+      'type' : 'leaf' ,
+      'terminal' : 'comment' ,
+      'buffer' : '%' ,
+    }) ,
 
     "ifcmd": async ( tree , match , ctx ) => {
 
@@ -332,12 +380,6 @@ export default {
       return empty;
     } ,
 
-    "comment": ( ) => ({
-      'type' : 'leaf' ,
-      'terminal' : 'comment' ,
-      'buffer' : '%' ,
-    }) ,
-
     "def": async ( tree , match , { variables } ) => {
       const it = iter(tree.children) ;
       await next(it) ; // \def
@@ -379,29 +421,16 @@ export default {
       return t( envdef , match , ctx ) ;
     } ,
 
-    "\n" : tree => tree ,
-
-    " " : tree => tree ,
-
-    "arg": async ( tree , match , { args , variables } ) => {
-      const arg = await next(iter(tree.children)) ;
-      if ( args.length < 2 ) throw new Error(`Requesting ${arg.buffer} but got no arguments in context.`) ;
-      const i = parseInt(arg.buffer.substr(1), 10) - 1; // #arg
-      if ( i >= args[1].length ) throw new Error(`Requesting ${arg.buffer} but only got ${args[1].length} arguments.`) ;
-      const subtree = args[1][i] ; // arg
-      return t( subtree , match , { args: args[0] , variables } ) ;
-    } ,
-
-    "$" : tree => tree ,
-
-    "math" : recurse('something-else', 'math') ,
-    "mathenv" : recurse('something-else', 'mathenv') ,
-
   } ,
 
-  "endif": {
-    "elsefi" : recurse( 'endif', 'elsefi' ) ,
-    "fi" : tree => tree ,
+  "argument-subject" : {
+    "#" : () => {
+      throw new Error('Escaped hash (##) without argument context.') ;
+    } ,
+    "digit" : async tree => {
+      const digit = await next(iter(tree.children)) ;
+      throw new Error(`Requesting #${digit.buffer} without argument context.`) ;
+    } ,
   } ,
 
   "command-definition" : {
@@ -480,7 +509,6 @@ export default {
       variables.get('env').set(env, [ nargs , dflt , begin , end ]);
       return empty;
     } ,
-    "*{envname}[nargs][default]{begin}{end}" : recurse( 'environment-definition' , '*{envname}[nargs][default]{begin}{end}' ) ,
   } ,
   "definition-parameters" : {
     "yes" : err('definition-parameters' , 'yes' ) ,
@@ -496,29 +524,6 @@ export default {
     "no" : err( "cmd*" , "no" ) ,
   } ,
 
-  "cmdargs": {
-    "normal" : recurse('cmdargs', 'normal') ,
-    "optional" : recurse('cmdargs', 'optional') ,
-    "end" : () => empty ,
-  } ,
-
-  "cmdafter": {
-    "othercmd" : recurse('cmdafter', 'othercmd' ) ,
-    "begin-environment" : recurse('cmdafter', 'begin-environment' ) ,
-    "end-environment" : recurse('cmdafter', 'end-environment' ) ,
-    "something-else-then-anything" : recurse('cmdafter', 'something-else-then-anything' ) ,
-    "]-then-anything" : recurse('cmdafter', ']-then-anything' ) ,
-    "nothing" : () => empty ,
-  } ,
-
-  "cmdafter-but-not-]": {
-    "othercmd" : recurse('cmdafter-but-not-]', 'othercmd' ) ,
-    "begin-environment" : recurse('cmdafter-but-not-]', 'begin-environment' ) ,
-    "end-environment" : recurse('cmdafter-but-not-]', 'end-environment' ) ,
-    "something-else-then-anything" : recurse('cmdafter-but-not-]', 'something-else-then-anything' ) ,
-    "nothing" : () => empty ,
-  } ,
-
   "ignore" : {
     "starts-with-a-space" : err('ignore', 'starts-with-a-space') ,
     "starts-with-a-newline" : err('ignore', 'starts-with-a-newline') ,
@@ -526,4 +531,4 @@ export default {
     "nothing" : err('ignore', 'nothing') ,
   } ,
 
-} ;
+} ) ;

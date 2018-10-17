@@ -3,7 +3,7 @@ import tape from '@aureooms/js-tape' ;
 
 import tokens from './tokens' ;
 import grammar from './grammar' ;
-import shaker from './shaker' ;
+import shaker from './transform/shaker' ;
 
 export default async function shaketape ( inputTape , outputStream ) {
 
@@ -25,8 +25,8 @@ export default async function shaketape ( inputTape , outputStream ) {
 
   const ctx = {
     env : [ ] ,
-    args : [ ] ,
     variables ,
+    parser ,
   } ;
 
   const transformed = await ast.transform( tree , shaker , ctx ) ;

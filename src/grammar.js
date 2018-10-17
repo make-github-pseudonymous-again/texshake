@@ -66,10 +66,15 @@ const productions = {
     "renewenvironment" : [ '=renewenvironment' , "&environment-definition" ] ,
     "\n" : [ '=\n' ] ,
     " " : [ '= ' ] ,
-    "arg" : [ '=arg' ] , // 1.12
+    "digit" : [ '=digit' ] ,
+    "argument" : [ '=#' , '&argument-subject' ] , // 1.12
     "$" : [ '=$' ] ,
     "math" : [ '=\\(' , '&anything' , '=\\)' ] ,
     "mathenv" : [ '=\\[' , '&anything' , '=\\]' ] ,
+  } ,
+  "argument-subject" : {
+    "#" : [ "=#" ] ,
+    "digit" : [ "=digit" ] ,
   } ,
   "endif" : { // endif : 2
     "elsefi" : [ '=else' , "&anything" , '=fi' ] , // 2.0
@@ -85,7 +90,7 @@ const productions = {
     "*{envname}[nargs][default]{begin}{end}" : [ '=*' , '={' , '=text' , '=}' , "&definition-parameters" , '={' , "&anything" , '=}' , '={' , "&anything" , '=}' ] ,
   } ,
   "definition-parameters" : {
-    "yes" : [ '=[' , '=text' , '=]' , '&default-argument-for-definition' , "&ignore" ] ,
+    "yes" : [ '=[' , '=digit' , '=]' , '&default-argument-for-definition' , "&ignore" ] ,
     "no" : [ ] ,
   } ,
   "default-argument-for-definition" : {
