@@ -94,3 +94,10 @@ The tokens are produced according to
 and
 the shaking logic lies in
 [this file](https://github.com/aureooms/texshake/blob/master/src/transform/shaker.js).
+
+## Related
+
+  - [alvinwan/TexSoup](https://github.com/alvinwan/TexSoup)
+  - [michael-brade/LaTeX.js](https://github.com/michael-brade/LaTeX.js)
+  - [WikiToLearn/texla](https://github.com/WikiToLearn/texla)
+  - [LaTeX is Turing-complete](https://tex.stackexchange.com/questions/4201/is-there-a-bnf-grammar-of-the-tex-language)
