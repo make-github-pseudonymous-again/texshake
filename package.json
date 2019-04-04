@@ -33,16 +33,16 @@
     "@babel/polyfill": "^7.4.3"
   },
   "devDependencies": {
-    "@babel/cli": "^7.4.3",
-    "@babel/core": "^7.4.3",
-    "@babel/plugin-proposal-async-generator-functions": "^7.2.0",
-    "@babel/preset-env": "^7.4.3",
-    "@babel/register": "^7.4.0",
-    "ava": "^1.4.1",
-    "codeclimate-test-reporter": "^0.5.1",
-    "coveralls": "^3.0.3",
-    "np": "^4.0.2",
-    "nyc": "^13.3.0"
+    "@babel/cli": "7.4.3",
+    "@babel/core": "7.4.3",
+    "@babel/plugin-proposal-async-generator-functions": "7.2.0",
+    "@babel/preset-env": "7.4.3",
+    "@babel/register": "7.4.0",
+    "ava": "1.4.1",
+    "codeclimate-test-reporter": "0.5.1",
+    "coveralls": "3.0.3",
+    "np": "4.0.2",
+    "nyc": "13.3.0"
   },
   "files": [
     "lib"
