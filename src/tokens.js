@@ -68,7 +68,7 @@ async function* _tokens ( tape ) {
 	  break;
 
 	default:
-	  if ( cmd.substr(0,3) === '\\if' ) cmdtype = 'ifcmd' ;
+	  if ( cmd.substr(0,3) === '\\if' && cmd !== '\\iff' ) cmdtype = 'ifcmd' ;
 	  else if (cmd.substr(cmd.length-5, 5) === 'false' ) cmdtype = 'falsecmd' ;
 	  else if (cmd.substr(cmd.length-4, 4) === 'true' ) cmdtype = 'truecmd' ;
 	  break;

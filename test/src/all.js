@@ -96,6 +96,12 @@ test( transform , '\\abcfalse\\ifabc ah\\else oh\\fi' , ' oh' ) ; // disappear?
 // with a newif
 test( transform , '\\newif\\ifabc\\abctrue\\ifabc ah\\fi' , ' ah' ) ; // should
 
+// \iff is not an \ifxxx statement
+test( immutable , '$\\iff$' ) ;
+test( immutable , '\\(\\iff\\)' ) ;
+test( immutable , '$A \\iff B$' ) ;
+test( immutable , '\\(A \\iff B\\)' ) ;
+
 // def
 test( transform , '\\def\\mymacro{Hello, world}\\mymacro', 'Hello, world') ;
 
