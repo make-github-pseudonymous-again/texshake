@@ -1,5 +1,10 @@
 import { grammar } from '@aureooms/js-grammar' ;
 
+const environment_definition = {
+    "{envname}[nargs][default]{begin}{end}" : [ '={' , '&anything' , '=}' , "&ignore" , "&definition-parameters" , '={' , "&anything" , '=}' , "&ignore" , '={' , "&anything" , '=}' ] ,
+    "*{envname}[nargs][default]{begin}{end}" : [ '=*' , '={' , '&anything' , '=}' , "&definition-parameters" , '={' , "&anything" , '=}' , '={' , "&anything" , '=}' ] ,
+} ;
+
 const root = "document" ;
 const start = "contents" ;
 const eof = "%" ;
@@ -63,7 +68,7 @@ const productions = {
     "newcommand" : [ '=newcommand' , "&command-definition" ] , // 1.8
     "renewcommand" : [ '=renewcommand' , "&command-definition" ] ,
     "newenvironment" : [ '=newenvironment' , "&environment-definition" ] ,
-    "renewenvironment" : [ '=renewenvironment' , "&environment-definition" ] ,
+    "renewenvironment" : [ '=renewenvironment' , "&environment-redefinition" ] ,
     "\n" : [ '=\n' ] ,
     " " : [ '= ' ] ,
     "digit" : [ '=digit' ] ,
@@ -85,10 +90,8 @@ const productions = {
     "cmd[nargs][default]{anything}" : [ '=othercmd' , "&definition-parameters" , '={' , "&anything" , '=}' ] ,
     "*cmd[nargs][default]{anything}" : [ '=*' , '=othercmd' , "&definition-parameters" , '={' , "&anything" , '=}' ] ,
   } ,
-  "environment-definition" : {
-    "{envname}[nargs][default]{begin}{end}" : [ '={' , '=text' , '=}' , "&ignore" , "&definition-parameters" , '={' , "&anything" , '=}' , "&ignore" , '={' , "&anything" , '=}' ] ,
-    "*{envname}[nargs][default]{begin}{end}" : [ '=*' , '={' , '=text' , '=}' , "&definition-parameters" , '={' , "&anything" , '=}' , '={' , "&anything" , '=}' ] ,
-  } ,
+  "environment-definition" : environment_definition ,
+  "environment-redefinition" : environment_definition ,
   "definition-parameters" : {
     "yes" : [ '=[' , '=digit' , '=]' , '&default-argument-for-definition' , "&ignore" ] ,
     "no" : [ ] ,

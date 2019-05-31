@@ -57,6 +57,24 @@ async function parseDefinitionParameters ( parameters ) {
   return [ nargs , dfltarg ] ;
 }
 
+function* stringifyDefinitionParameters ( nargs , dfltarg ) {
+  if ( nargs > 0 ) {
+    yield leftSquareBracket ;
+    yield {
+      'type': 'leaf',
+      'terminal': 'digit',
+      'buffer': nargs.toString(),
+    } ;
+    yield rightSquareBracket ;
+
+    if ( dfltarg ) {
+      yield leftSquareBracket ;
+      yield dfltarg ;
+      yield rightSquareBracket ;
+    }
+  }
+}
+
 
 const empty = {
   'type' : 'node' ,
@@ -69,6 +87,18 @@ const hash = {
   'type' : 'leaf' ,
   'terminal' : '#' ,
   'buffer' : '#' ,
+} ;
+
+const leftSquareBracket = {
+  'type' : 'leaf' ,
+  'terminal' : '[' ,
+  'buffer' : '[' ,
+} ;
+
+const rightSquareBracket = {
+  'type' : 'leaf' ,
+  'terminal' : ']' ,
+  'buffer' : ']' ,
 } ;
 
 const err = ( nonterminal , production ) => () => {
@@ -491,8 +521,10 @@ export default extend( optimizedVisitor , {
       const it = iter(tree.children) ;
       //await next(it); // *
       await next(it); // {
-      const envtext = await next(it);
-      const env = envtext.buffer;
+      const envnameanything = await next(it); // TODO this is now anything and needs to be executed
+      const flattened = ast.flatten(envnameanything) ;
+      let env = '';
+      for await ( const leaf of flattened ) env += leaf.buffer ;
       await next(it); // }
       await next(it); // ignore
       const parameters = await next(it); // [nargs][default]
@@ -508,6 +540,70 @@ export default extend( optimizedVisitor , {
       await next(it); // }
       variables.get('env').set(env, [ nargs , dflt , begin , end ]);
       return empty;
+    } ,
+  } ,
+  "environment-redefinition" : {
+    "{envname}[nargs][default]{begin}{end}" :  async ( tree , _ , { variables } ) => {
+      // do not know what to do with '*' at the moment
+      // see https://tex.stackexchange.com/questions/1050/whats-the-difference-between-newcommand-and-newcommand
+      const it = iter(tree.children) ;
+      //await next(it); // *
+      const leftbracket1 = await next(it); // {
+      const envnameanything = await next(it); // TODO this is now anything and needs to be executed
+      const flattened = ast.flatten(envnameanything) ;
+      let env = '';
+      for await ( const leaf of flattened ) env += leaf.buffer ;
+      const rightbracket1 = await next(it); // }
+      const ignore1 = await next(it); // ignore
+      const parameters = await next(it); // [nargs][default]
+      const [ nargs , dflt ] = await parseDefinitionParameters( parameters ) ;
+      const leftbracket2 = await next(it); // {
+      const anything2 = await next(it);
+      const begin = await ast.materialize(anything2) ;
+      const rightbracket2 = await next(it); // }
+      const ignore2 = await next(it); // ignore
+      const leftbracket3 = await next(it); // {
+      const anything3 = await next(it);
+      const end = await ast.materialize(anything3) ;
+      const rightbracket3 = await next(it); // }
+      variables.get('env').delete(env);
+
+      const renewenvironment = {
+	'type' : 'leaf' ,
+	'terminal' : 'renewenvironment' ,
+	'buffer' : '\\renewenvironment' ,
+      } ;
+
+      const envname = {
+	'type' : 'leaf' ,
+	'terminal' : 'text' ,
+	'buffer' : env ,
+      } ;
+
+      return {
+	'type' : 'node' ,
+	'nonterminal' : 'begin-environment' ,
+	'production' : '{envname}[nargs][default]{begin}{end}' ,
+	'children' : chain( [
+	  [
+	    renewenvironment ,
+	    leftbracket1 ,
+	    envname ,
+	    rightbracket1 ,
+	    ignore1 ,
+	  ] ,
+	  stringifyDefinitionParameters(nargs, dflt) ,
+	  [
+	    leftbracket2 ,
+	    begin ,
+	    rightbracket2 ,
+	    ignore2 ,
+	    leftbracket3 ,
+	    end ,
+	    rightbracket3 ,
+	  ]
+	] ) ,
+      } ;
     } ,
   } ,
   "definition-parameters" : {

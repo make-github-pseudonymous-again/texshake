@@ -228,20 +228,20 @@ test( immutable , '\\begin{theorem}\\dots\\end{theorem}' ) ;
 test( immutable , '\\begin{theorem}[Brol et al.~\\cite{brol}]\\dots\\end{theorem}' ) ;
 
 test( transform , '\\newenvironment{test}[1][]{#1}{}\\begin{test}x\\end{test}' , 'x' ) ;
-test( transform , '\\renewenvironment{test}[1][]{#1}{}\\begin{test}x\\end{test}' , 'x' ) ;
+test( immutable , '\\renewenvironment{test}[1][]{#1}{}\\begin{test}x\\end{test}' ) ;
 test( transform , '\\newenvironment{test}[1][b]{#1}{}\\begin{test}x\\end{test}' , 'bx' ) ;
-test( transform , '\\renewenvironment{test}[1][b]{#1}{}\\begin{test}x\\end{test}' , 'bx' ) ;
+test( immutable , '\\renewenvironment{test}[1][b]{#1}{}\\begin{test}x\\end{test}' ) ;
 test( transform , '\\newenvironment{test}[2][b]{#1}{#2}\\begin{test}{z}x\\end{test}' , 'bxz' ) ;
-test( transform , '\\renewenvironment{test}[2][b]{#1}{#2}\\begin{test}{z}x\\end{test}' , 'bxz' ) ;
+test( immutable , '\\renewenvironment{test}[2][b]{#1}{#2}\\begin{test}{z}x\\end{test}' ) ;
 test( transform , '\\newenvironment{test}[2][b]{#1}{#2}\\begin{test}[a]{z}x\\end{test}' , 'axz' ) ;
-test( transform , '\\renewenvironment{test}[2][b]{#1}{#2}\\begin{test}[a]{z}x\\end{test}' , 'axz' ) ;
+test( immutable , '\\renewenvironment{test}[2][b]{#1}{#2}\\begin{test}[a]{z}x\\end{test}' ) ;
 test( transform , '\\newenvironment{test}[1]{#1}{}\\begin{test}{a}x\\end{test}' , 'ax' ) ;
-test( transform , '\\renewenvironment{test}[1]{#1}{}\\begin{test}{a}x\\end{test}' , 'ax' ) ;
+test( immutable , '\\renewenvironment{test}[1]{#1}{}\\begin{test}{a}x\\end{test}' ) ;
 test( transform , '\\newenvironment{test}[1][]{#1}{}' , '' ) ;
-test( transform , '\\renewenvironment{test}[1][]{#1}{}' , '' ) ;
+test( immutable , '\\renewenvironment{test}[1][]{#1}{}' ) ;
 test( transform , '\\newenvironment{items}{\\begin{itemize}}{\\end{itemize}}\\begin{items}\\end{items}' , '\\begin{itemize}\\end{itemize}' )
 test( throws , '\\newenvironment{test}[1][]{#1}{}\\begin{test}{a}x\\end{test}' , /test is defined with 1 arguments but 2 were given/ ) ;
-test( throws , '\\renewenvironment{test}[1][]{#1}{}\\begin{test}{a}x\\end{test}' , /test is defined with 1 arguments but 2 were given/ ) ;
+test( immutable , '\\renewenvironment{test}[1][]{#1}{}\\begin{test}{a}x\\end{test}' ) ;
 
 // transformed input files
 const transformedFiledir = 'test/data/transform' ;

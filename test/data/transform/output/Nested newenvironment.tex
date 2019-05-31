@@ -1,0 +1,85 @@
+%
+\usepackage[mathlines]{lineno}
+%
+%
+\AtBeginDocument{%
+%
+  %
+\expandafter\let\csname oldequation\expandafter\endcsname\csname equation\endcsname
+\expandafter\let\csname oldendequation\expandafter\endcsname\csname endequation\endcsname
+\renewenvironment{equation}%
+     {\linenomath\csname oldequation\endcsname}%
+     {\csname oldendequation\endcsname\endlinenomath}%
+  %
+\expandafter\let\csname oldequation*\expandafter\endcsname\csname equation*\endcsname
+\expandafter\let\csname oldendequation*\expandafter\endcsname\csname endequation*\endcsname
+\renewenvironment{equation*}%
+     {\linenomath\csname oldequation*\endcsname}%
+     {\csname oldendequation*\endcsname\endlinenomath}%
+%
+  %
+\expandafter\let\csname oldalign\expandafter\endcsname\csname align\endcsname
+\expandafter\let\csname oldendalign\expandafter\endcsname\csname endalign\endcsname
+\renewenvironment{align}%
+     {\linenomath\csname oldalign\endcsname}%
+     {\csname oldendalign\endcsname\endlinenomath}%
+  %
+\expandafter\let\csname oldalign*\expandafter\endcsname\csname align*\endcsname
+\expandafter\let\csname oldendalign*\expandafter\endcsname\csname endalign*\endcsname
+\renewenvironment{align*}%
+     {\linenomath\csname oldalign*\endcsname}%
+     {\csname oldendalign*\endcsname\endlinenomath}%
+%
+  %
+\expandafter\let\csname oldflalign\expandafter\endcsname\csname flalign\endcsname
+\expandafter\let\csname oldendflalign\expandafter\endcsname\csname endflalign\endcsname
+\renewenvironment{flalign}%
+     {\linenomath\csname oldflalign\endcsname}%
+     {\csname oldendflalign\endcsname\endlinenomath}%
+  %
+\expandafter\let\csname oldflalign*\expandafter\endcsname\csname flalign*\endcsname
+\expandafter\let\csname oldendflalign*\expandafter\endcsname\csname endflalign*\endcsname
+\renewenvironment{flalign*}%
+     {\linenomath\csname oldflalign*\endcsname}%
+     {\csname oldendflalign*\endcsname\endlinenomath}%
+%
+  %
+\expandafter\let\csname oldalignat\expandafter\endcsname\csname alignat\endcsname
+\expandafter\let\csname oldendalignat\expandafter\endcsname\csname endalignat\endcsname
+\renewenvironment{alignat}%
+     {\linenomath\csname oldalignat\endcsname}%
+     {\csname oldendalignat\endcsname\endlinenomath}%
+  %
+\expandafter\let\csname oldalignat*\expandafter\endcsname\csname alignat*\endcsname
+\expandafter\let\csname oldendalignat*\expandafter\endcsname\csname endalignat*\endcsname
+\renewenvironment{alignat*}%
+     {\linenomath\csname oldalignat*\endcsname}%
+     {\csname oldendalignat*\endcsname\endlinenomath}%
+%
+  %
+\expandafter\let\csname oldgather\expandafter\endcsname\csname gather\endcsname
+\expandafter\let\csname oldendgather\expandafter\endcsname\csname endgather\endcsname
+\renewenvironment{gather}%
+     {\linenomath\csname oldgather\endcsname}%
+     {\csname oldendgather\endcsname\endlinenomath}%
+  %
+\expandafter\let\csname oldgather*\expandafter\endcsname\csname gather*\endcsname
+\expandafter\let\csname oldendgather*\expandafter\endcsname\csname endgather*\endcsname
+\renewenvironment{gather*}%
+     {\linenomath\csname oldgather*\endcsname}%
+     {\csname oldendgather*\endcsname\endlinenomath}%
+%
+  %
+\expandafter\let\csname oldmultline\expandafter\endcsname\csname multline\endcsname
+\expandafter\let\csname oldendmultline\expandafter\endcsname\csname endmultline\endcsname
+\renewenvironment{multline}%
+     {\linenomath\csname oldmultline\endcsname}%
+     {\csname oldendmultline\endcsname\endlinenomath}%
+  %
+\expandafter\let\csname oldmultline*\expandafter\endcsname\csname multline*\endcsname
+\expandafter\let\csname oldendmultline*\expandafter\endcsname\csname endmultline*\endcsname
+\renewenvironment{multline*}%
+     {\linenomath\csname oldmultline*\endcsname}%
+     {\csname oldendmultline*\endcsname\endlinenomath}%
+}
+\linenumbers
