@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
-import '@babel/polyfill' ;
+import 'core-js/stable' ;
+import 'regenerator-runtime/runtime' ;
+
 
 import fs from 'fs' ;
 
