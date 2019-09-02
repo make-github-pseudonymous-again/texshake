@@ -32,11 +32,26 @@ async function* _tokens ( tape ) {
 
 	if ( d === tape.eof ) break ;
 
-	// http://www.tex.ac.uk/FAQ-whatmacros.html
-	if ( ( d >= 'a' && d <= 'z' ) || ( d >= 'A' && d <= 'Z' ) ) cmd += d;
+	// Quoting http://www.tex.ac.uk/FAQ-whatmacros.html
+	// ``Macro names are conventionally built from a \ followed by a sequence
+	// of letters, which may be upper or lower case (as in \TeX, mentioned
+	// above). They may also be <any single character>, which allows all
+	// sorts of oddities (many built in to most TeX macro sets, all the way
+	// up from the apparently simple \ meaning “insert a space here”).''
+	if ( ( d >= 'a' && d <= 'z' ) || ( d >= 'A' && d <= 'Z' ) ) {
+	  // multiple characters command name (only letters)
+	  cmd += d;
+	}
 	else {
-	  if ( cmd === '\\' ) cmd += d;
-	  else tape.unread(d);
+	  if ( cmd === '\\' ) {
+	    // single character command name (any character)
+	    cmd += d;
+	  }
+	  else {
+	    // new token
+	    tape.unread(d);
+	  }
+	  // end of command
 	  break;
 	}
       }
