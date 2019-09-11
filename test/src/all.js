@@ -260,6 +260,7 @@ test( transform , '\\newcommand{\\price}[2][17.5]{\\pounds #2 excl VAT @ #1\\%}\
 test( transform , '\\newcommand{\\price}[2][17.5]{\\pounds #2 excl VAT @ #1\\%}\\price[20]{1000}' , '\\pounds 1000 excl VAT @ 20\\%') ;
 test( transform , '\\newcommand{\\price}{}\\renewcommand{\\price}[2][17.5]{\\pounds #2 excl VAT @ #1\\%}\\price{100}' , '\\pounds 100 excl VAT @ 17.5\\%') ;
 test( transform , '\\newcommand{\\price}{}\\renewcommand{\\price}[2][17.5]{\\pounds #2 excl VAT @ #1\\%}\\price[20]{1000}' , '\\pounds 1000 excl VAT @ 20\\%') ;
+
 // do not process renewcommand without a newcommand
 test( immutable , '\\renewcommand{\\test}{test}' ) ;
 test( immutable , '\\renewcommand{\\test}{test}\\test' ) ;
@@ -267,3 +268,6 @@ test( immutable , '\\renewcommand\\test{test}' ) ;
 test( immutable , '\\renewcommand\\test{test}\\test' ) ;
 test( immutable , '\\renewcommand*\\test{test}' ) ;
 test( immutable , '\\renewcommand*\\test{test}\\test' ) ;
+
+// throw on defining existing command
+test( throws , '\\newcommand{\\test}{}\\newcommand{\\test}{}' , /test is already defined/) ;

@@ -112,13 +112,19 @@ const commandDefinitionParser = {
 }
 
 function processCommandDefinition ( commands , cmd , definition ) {
-  commands.set(cmd, definition);
-  return empty;
+  if ( commands.has(cmd) ) {
+    throw new Error(`Command ${cmd} is already defined.`);
+  }
+  else {
+    commands.set(cmd, definition);
+    return empty;
+  }
 }
 
-function processCommandRedefinition ( commands , tree , cmd , nargs , dflt , blob ) {
+function processCommandRedefinition ( commands , cmd , definition , tree ) {
   if ( commands.has(cmd) ) {
-    return processCommandDefinition( commands, cmd, [ nargs , dflt , blob ]);
+    commands.set(cmd, definition);
+    return empty;
   }
   else {
     const renewcommand = {
@@ -576,19 +582,19 @@ export default extend( optimizedVisitor , {
     "{cmd}[nargs][default]{anything}": async ( tree , _ , { variables } ) => {
       tree = await ast.materialize(tree);
       const [ cmd , nargs , dflt , blob ] = await commandDefinitionParser["{cmd}[nargs][default]{anything}"](tree) ;
-      return processCommandRedefinition( variables.get('cmd') , tree , cmd , nargs , dflt , blob ) ;
+      return processCommandRedefinition( variables.get('cmd') , cmd , [nargs , dflt , blob], tree ) ;
     } ,
 
     "cmd[nargs][default]{anything}": async ( tree , _ , { variables } ) => {
       tree = await ast.materialize(tree);
       const [ cmd , nargs , dflt , blob ] = await commandDefinitionParser["cmd[nargs][default]{anything}"](tree) ;
-      return processCommandRedefinition( variables.get('cmd') , tree , cmd , nargs , dflt , blob ) ;
+      return processCommandRedefinition( variables.get('cmd') , cmd , [nargs , dflt , blob], tree ) ;
     } ,
 
     "*cmd[nargs][default]{anything}": async ( tree , _ , { variables } ) => {
       tree = await ast.materialize(tree);
       const [ cmd , nargs , dflt , blob ] = await commandDefinitionParser["*cmd[nargs][default]{anything}"](tree) ;
-      return processCommandRedefinition( variables.get('cmd') , tree , cmd , nargs , dflt , blob ) ;
+      return processCommandRedefinition( variables.get('cmd') , cmd , [nargs , dflt , blob], tree ) ;
     } ,
 
   } ,
