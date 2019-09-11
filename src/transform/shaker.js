@@ -57,6 +57,14 @@ async function parseDefinitionParameters ( parameters ) {
   return [ nargs , dfltarg ] ;
 }
 
+async function stringifyCommandOrEnvironmentName ( tree ) {
+  // TODO tree is anything and needs to be executed
+  const flattened = ast.flatten(tree) ;
+  let name = '';
+  for await ( const leaf of flattened ) name += leaf.buffer ;
+  return name ;
+}
+
 function* stringifyDefinitionParameters ( nargs , dfltarg ) {
   if ( nargs > 0 ) {
     yield leftSquareBracket ;
@@ -521,10 +529,8 @@ export default extend( optimizedVisitor , {
       const it = iter(tree.children) ;
       //await next(it); // *
       await next(it); // {
-      const envnameanything = await next(it); // TODO this is now anything and needs to be executed
-      const flattened = ast.flatten(envnameanything) ;
-      let env = '';
-      for await ( const leaf of flattened ) env += leaf.buffer ;
+      const envnameanything = await next(it);
+      const env = await stringifyCommandOrEnvironmentName(envnameanything) ;
       await next(it); // }
       await next(it); // ignore
       const parameters = await next(it); // [nargs][default]
@@ -549,10 +555,8 @@ export default extend( optimizedVisitor , {
       const it = iter(tree.children) ;
       //await next(it); // *
       const leftbracket1 = await next(it); // {
-      const envnameanything = await next(it); // TODO this is now anything and needs to be executed
-      const flattened = ast.flatten(envnameanything) ;
-      let env = '';
-      for await ( const leaf of flattened ) env += leaf.buffer ;
+      const envnameanything = await next(it);
+      const env = await stringifyCommandOrEnvironmentName(envnameanything) ;
       const rightbracket1 = await next(it); // }
       const ignore1 = await next(it); // ignore
       const parameters = await next(it); // [nargs][default]
