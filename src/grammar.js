@@ -5,6 +5,12 @@ const environment_definition = {
     "*{envname}[nargs][default]{begin}{end}" : [ '=*' , '={' , '&anything' , '=}' , "&definition-parameters" , '={' , "&anything" , '=}' , '={' , "&anything" , '=}' ] ,
 } ;
 
+const command_definition = {
+  "{cmd}[nargs][default]{anything}" : [ '={' , '=othercmd' , '=}' , "&definition-parameters" , '={' , "&anything" , '=}' ] ,
+  "cmd[nargs][default]{anything}" : [ '=othercmd' , "&definition-parameters" , '={' , "&anything" , '=}' ] ,
+  "*cmd[nargs][default]{anything}" : [ '=*' , '=othercmd' , "&definition-parameters" , '={' , "&anything" , '=}' ] ,
+} ;
+
 const root = "document" ;
 const start = "contents" ;
 const eof = "%" ;
@@ -66,7 +72,7 @@ const productions = {
     "comment" : [ '=comment' ] , // 1.5
     "def" : [ '=def' , '=othercmd' , '={' , "&anything" , '=}' ] , // 1.7
     "newcommand" : [ '=newcommand' , "&command-definition" ] , // 1.8
-    "renewcommand" : [ '=renewcommand' , "&command-definition" ] ,
+    "renewcommand" : [ '=renewcommand' , "&command-redefinition" ] ,
     "newenvironment" : [ '=newenvironment' , "&environment-definition" ] ,
     "renewenvironment" : [ '=renewenvironment' , "&environment-redefinition" ] ,
     "\n" : [ '=\n' ] ,
@@ -85,11 +91,8 @@ const productions = {
     "elsefi" : [ '=else' , "&anything" , '=fi' ] , // 2.0
     "fi" : [ '=fi' ] , // 2.1
   } ,
-  "command-definition" : { // command definition 3
-    "{cmd}[nargs][default]{anything}" : [ '={' , '=othercmd' , '=}' , "&definition-parameters" , '={' , "&anything" , '=}' ] ,
-    "cmd[nargs][default]{anything}" : [ '=othercmd' , "&definition-parameters" , '={' , "&anything" , '=}' ] ,
-    "*cmd[nargs][default]{anything}" : [ '=*' , '=othercmd' , "&definition-parameters" , '={' , "&anything" , '=}' ] ,
-  } ,
+  "command-definition" : command_definition ,
+  "command-redefinition" : command_definition ,
   "environment-definition" : environment_definition ,
   "environment-redefinition" : environment_definition ,
   "definition-parameters" : {

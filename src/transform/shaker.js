@@ -65,6 +65,82 @@ async function stringifyCommandOrEnvironmentName ( tree ) {
   return name ;
 }
 
+const commandDefinitionParser = {
+  "{cmd}[nargs][default]{anything}": async ( tree ) => {
+    const it = iter(tree.children) ;
+    await next(it); // {
+    const othercmd = await next(it); // cmd
+    const cmd = othercmd.buffer;
+    await next(it); // }
+    const parameters = await next(it); // [nargs][default]
+    const [ nargs , dflt ] = await parseDefinitionParameters( parameters ) ;
+    await next(it); // {
+    const anything = await next(it);
+    const blob = await ast.materialize(anything) ; // anything
+    await next(it); // }
+    return [ cmd , nargs , dflt , blob ] ;
+  } ,
+
+  "cmd[nargs][default]{anything}": async ( tree ) => {
+    const it = iter(tree.children) ;
+    const othercmd = await next(it);
+    const cmd = othercmd.buffer;
+    const parameters = await next(it); // [nargs][default]
+    const [ nargs , dflt ] = await parseDefinitionParameters( parameters ) ;
+    await next(it); // {
+    const anything = await next(it);
+    const blob = await ast.materialize(anything) ;
+    await next(it); // }
+    return [ cmd , nargs , dflt , blob ] ;
+  } ,
+
+  "*cmd[nargs][default]{anything}": async ( tree ) => {
+    // do not know what to do with '*' at the moment
+    // see https://tex.stackexchange.com/questions/1050/whats-the-difference-between-newcommand-and-newcommand
+    const it = iter(tree.children) ;
+    await next(it); // *
+    const othercmd = await next(it);
+    const cmd = othercmd.buffer;
+    const parameters = await next(it); // [nargs][default]
+    const [ nargs , dflt ] = await parseDefinitionParameters( parameters ) ;
+    await next(it); // {
+    const anything = await next(it);
+    const blob = await ast.materialize(anything) ;
+    await next(it); // }
+    return [ cmd , nargs , dflt , blob ] ;
+  } ,
+}
+
+function processCommandDefinition ( commands , cmd , definition ) {
+  commands.set(cmd, definition);
+  return empty;
+}
+
+function processCommandRedefinition ( commands , tree , cmd , nargs , dflt , blob ) {
+  if ( commands.has(cmd) ) {
+    return processCommandDefinition( commands, cmd, [ nargs , dflt , blob ]);
+  }
+  else {
+    const renewcommand = {
+      'type' : 'leaf' ,
+      'terminal' : 'renewcommand' ,
+      'buffer' : '\\renewcommand' ,
+    } ;
+
+    return {
+      'type' : 'node' ,
+      'nonterminal' : 'something-else' ,
+      'production' : 'renewcommand' ,
+      'children' : chain( [
+	[
+	  renewcommand ,
+	  tree ,
+	]
+      ] ) ,
+    } ;
+  }
+}
+
 function* stringifyDefinitionParameters ( nargs , dfltarg ) {
   if ( nargs > 0 ) {
     yield leftSquareBracket ;
@@ -474,50 +550,45 @@ export default extend( optimizedVisitor , {
   "command-definition" : {
 
     "{cmd}[nargs][default]{anything}": async ( tree , _ , { variables } ) => {
-      const it = iter(tree.children) ;
-      await next(it); // {
-      const othercmd = await next(it); // cmd
-      const cmd = othercmd.buffer;
-      await next(it); // }
-      const parameters = await next(it); // [nargs][default]
-      const [ nargs , dflt ] = await parseDefinitionParameters( parameters ) ;
-      await next(it); // {
-      const anything = await next(it);
-      const blob = await ast.materialize(anything) ; // anything
-      variables.get('cmd').set(cmd, [ nargs , dflt , blob ]);
-      await next(it); // }
-      return empty;
+      tree = await ast.materialize(tree);
+      const [ cmd , nargs , dflt , blob ] = await commandDefinitionParser["{cmd}[nargs][default]{anything}"](tree) ;
+      return processCommandDefinition( variables.get('cmd') , cmd, [ nargs , dflt ,blob ]);
     } ,
 
     "cmd[nargs][default]{anything}": async ( tree , _ , { variables } ) => {
-      const it = iter(tree.children) ;
-      const othercmd = await next(it);
-      const cmd = othercmd.buffer;
-      const parameters = await next(it); // [nargs][default]
-      const [ nargs , dflt ] = await parseDefinitionParameters( parameters ) ;
-      await next(it); // {
-      const anything = await next(it);
-      const blob = await ast.materialize(anything) ;
-      variables.get('cmd').set(cmd, [ nargs , dflt ,blob ]);
-      await next(it); // }
-      return empty;
+      tree = await ast.materialize(tree);
+      const [ cmd , nargs , dflt , blob ] = await commandDefinitionParser["cmd[nargs][default]{anything}"](tree) ;
+      return processCommandDefinition( variables.get('cmd') , cmd, [ nargs , dflt ,blob ]);
     } ,
 
     "*cmd[nargs][default]{anything}": async ( tree , _ , { variables } ) => {
       // do not know what to do with '*' at the moment
       // see https://tex.stackexchange.com/questions/1050/whats-the-difference-between-newcommand-and-newcommand
-      const it = iter(tree.children) ;
-      await next(it); // *
-      const othercmd = await next(it);
-      const cmd = othercmd.buffer;
-      const parameters = await next(it); // [nargs][default]
-      const [ nargs , dflt ] = await parseDefinitionParameters( parameters ) ;
-      await next(it); // {
-      const anything = await next(it);
-      const blob = await ast.materialize(anything) ;
-      variables.get('cmd').set(cmd, [ nargs , dflt ,blob ]);
-      await next(it); // }
-      return empty;
+      tree = await ast.materialize(tree);
+      const [ cmd , nargs , dflt , blob ] = await commandDefinitionParser["*cmd[nargs][default]{anything}"](tree) ;
+      return processCommandDefinition( variables.get('cmd') , cmd, [ nargs , dflt ,blob ]);
+    } ,
+
+  } ,
+
+  "command-redefinition" : {
+
+    "{cmd}[nargs][default]{anything}": async ( tree , _ , { variables } ) => {
+      tree = await ast.materialize(tree);
+      const [ cmd , nargs , dflt , blob ] = await commandDefinitionParser["{cmd}[nargs][default]{anything}"](tree) ;
+      return processCommandRedefinition( variables.get('cmd') , tree , cmd , nargs , dflt , blob ) ;
+    } ,
+
+    "cmd[nargs][default]{anything}": async ( tree , _ , { variables } ) => {
+      tree = await ast.materialize(tree);
+      const [ cmd , nargs , dflt , blob ] = await commandDefinitionParser["cmd[nargs][default]{anything}"](tree) ;
+      return processCommandRedefinition( variables.get('cmd') , tree , cmd , nargs , dflt , blob ) ;
+    } ,
+
+    "*cmd[nargs][default]{anything}": async ( tree , _ , { variables } ) => {
+      tree = await ast.materialize(tree);
+      const [ cmd , nargs , dflt , blob ] = await commandDefinitionParser["*cmd[nargs][default]{anything}"](tree) ;
+      return processCommandRedefinition( variables.get('cmd') , tree , cmd , nargs , dflt , blob ) ;
     } ,
 
   } ,
@@ -586,7 +657,7 @@ export default extend( optimizedVisitor , {
 
       return {
 	'type' : 'node' ,
-	'nonterminal' : 'begin-environment' ,
+	'nonterminal' : 'environment-redefinition' ,
 	'production' : '{envname}[nargs][default]{begin}{end}' ,
 	'children' : chain( [
 	  [

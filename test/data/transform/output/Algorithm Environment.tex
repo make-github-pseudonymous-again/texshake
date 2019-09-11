@@ -3,7 +3,7 @@
 
 
 \newcounter{algorithm}[section]
-%
+\renewcommand{\thealgorithm}{\arabic{section}.\arabic{algorithm}}%
 %
 
 \begin{document}
@@ -35,7 +35,7 @@ Below is a sketch of the algorithm.
 \refstepcounter{algorithm}%
  \par%
  \vspace{.5\baselineskip\@plus.2\baselineskip\@minus.2\baselineskip}%
-\noindent\textbf{Algorithm~\arabic{section}.\arabic{algorithm}}\ifx&Nonuniform algorithm for explicit 3POL&\else~(Nonuniform algorithm for explicit 3POL)\fi\textbf{.}%
+\noindent\textbf{Algorithm~\thealgorithm}\ifx&Nonuniform algorithm for explicit 3POL&\else~(Nonuniform algorithm for explicit 3POL)\fi\textbf{.}%
  %
  %
 \vspace{0.1cm}%
