@@ -166,6 +166,22 @@ function* stringifyDefinitionParameters ( nargs , dfltarg ) {
 }
 
 
+async function expandCSName ( expandafter , tree , match , ctx ) {
+
+  // hypothesis: tree is materialized
+
+  if ( tree.production === 'othercmd' ) {
+    return [ tree.children[0].buffer , false ] ;
+  }
+
+  if (!expandafter) throw new Error(`Cannot expand csname without expandafter`) ;
+
+  const anything = m([tree.children[2]], match, ctx) ;
+
+  return [ await stringifyCommandOrEnvironmentName(anything) , false ] ;
+
+}
+
 const empty = {
   'type' : 'node' ,
   'nonterminal' : 'empty' ,
@@ -309,14 +325,15 @@ function parseArguments ( args , dfltarg , type , name ) {
 
 export default extend( optimizedVisitor , {
 
-  "othercmd" : {
+  "othercmdcall" : {
 
-    "othercmd": async ( tree , match , ctx ) => {
+    "othercmdcall": async ( tree , match , ctx ) => {
 
       const it = iter(tree.children) ;
 
-      const othercmd = await next(it) ;
-      let cmd = othercmd.buffer;
+      const _othercmd = await next(it) ;
+      const othercmd = await ast.materialize(_othercmd);
+      let [ cmd ] = await expandCSName( true , othercmd , match , ctx ) ;
 
       const optstar = await ast.materialize(await next(it));
       if ( optstar.production === 'yes' ) cmd += '*';
@@ -344,8 +361,8 @@ export default extend( optimizedVisitor , {
 
       return {
 	'type' : 'node' ,
-	'nonterminal' : 'othercmd' ,
-	'production' : 'othercmd' ,
+	'nonterminal' : 'othercmdcall' ,
+	'production' : 'othercmdcall' ,
 	'children' : chain( [ [ othercmd , optstar ] , m([args], match, ctx) ] ) ,
       } ;
 
@@ -511,6 +528,34 @@ export default extend( optimizedVisitor , {
       variables.get('cmd').set(cmd, [0, null, blob]);
       await next(it) ; // }
       return empty ;
+    } ,
+
+    "let": async ( tree , match , ctx ) => {
+      tree = await ast.materialize(tree) ;
+      const [ _let , csname1 , csname2 ] = tree.children ;
+      const expandAfter1 = false;
+      const [ cmd1 , expandAfter2 ] = await expandCSName(expandAfter1, csname1, match, ctx);
+      const [ cmd2 ] = await expandCSName(expandAfter2, csname2, match, ctx);
+      const commands = ctx.variables.get('cmd');
+
+      if ( commands.has(cmd2) ) {
+	commands.set(cmd1, commands.get(cmd2));
+      }
+
+      //csname1.children[2] = {
+	//'type' : 'leaf' ,
+	//'terminal' : 'text' ,
+	//'buffer' : cmd1 ,
+      //} ;
+
+      //csname2.children[2] = {
+	//'type' : 'leaf' ,
+	//'terminal' : 'text' ,
+	//'buffer' : cmd2 ,
+      //} ;
+
+      return tree ;
+
     } ,
 
     "newcommand": async ( tree , match , ctx ) => {
@@ -706,6 +751,11 @@ export default extend( optimizedVisitor , {
     "starts-with-a-newline" : err('ignore', 'starts-with-a-newline') ,
     "starts-with-a-comment" : err('ignore', 'starts-with-a-comment') ,
     "nothing" : err('ignore', 'nothing') ,
+  } ,
+
+  "csname" : {
+    "othercmd" : err('csname' , 'othercmd' ) ,
+    "csname" : err('csname' , 'csname' ) ,
   } ,
 
 } ) ;

@@ -271,3 +271,10 @@ test( immutable , '\\renewcommand*\\test{test}\\test' ) ;
 
 // throw on defining existing command
 test( throws , '\\newcommand{\\test}{}\\newcommand{\\test}{}' , /test is already defined/) ;
+
+// let
+test( immutable , '\\let\\a\\b\\a' ) ;
+test( transform , '\\def\\b{x}\\let\\a\\b\\a' , 'x' ) ;
+
+// csname
+test( transform , '\\def\\a{z}\\csname a\\endcsname' , 'z' ) ;

@@ -19,7 +19,7 @@ const productions = {
     "contents" : [ "&anything" , "=%" ] ,
   } ,
   "anything" : {
-    "starts-with-othercmd" : [ '&othercmd' , "&cmdafter" ] ,
+    "starts-with-othercmd" : [ '&othercmdcall' , "&cmdafter" ] ,
     "starts-with-begin-environment" : [ "&begin-environment" , "&cmdafter"] ,
     "starts-with-end-environment" : [ "&end-environment" , "&anything" ] ,
     "starts-with-*" : [ '&*' , "&anything" ] ,
@@ -30,7 +30,7 @@ const productions = {
     "end" : [ ] , // 0.1
   } ,
   "anything-but-]" : {
-    "starts-with-othercmd" : [ '&othercmd' , "&cmdafter-but-not-]" ] ,
+    "starts-with-othercmd" : [ '&othercmdcall' , "&cmdafter-but-not-]" ] ,
     "starts-with-begin-environment" : [ "&begin-environment" , "&cmdafter-but-not-]" ] ,
     "starts-with-end-environment" : [ "&end-environment" , "&anything-but-]" ] ,
     "starts-with-*" : [ '&*' , "&anything-but-]" ] ,
@@ -45,8 +45,8 @@ const productions = {
   "optgroup" : {
     "group" : [ '=[' , "&anything-but-]" , '=]' ] ,
   } ,
-  "othercmd" : {
-    "othercmd" : [ '=othercmd' , "&cmd*" , "&cmdargs" ] ,
+  "othercmdcall" : {
+    "othercmdcall" : [ '&csname' , "&cmd*" , "&cmdargs" ] ,
   },
   "begin-environment" : {
     "begin-environment" : [ "=begin", '={' , "=text" , '=}' , "&cmdargs"] ,
@@ -70,6 +70,7 @@ const productions = {
     "falsecmd" : [ '=falsecmd' ] , // 1.3
     "truecmd" : [ '=truecmd' ] , // 1.4
     "comment" : [ '=comment' ] , // 1.5
+    "let" : [ '=let' , '&csname' , '&csname' ] ,
     "def" : [ '=def' , '=othercmd' , '={' , "&anything" , '=}' ] , // 1.7
     "newcommand" : [ '=newcommand' , "&command-definition" ] , // 1.8
     "renewcommand" : [ '=renewcommand' , "&command-redefinition" ] ,
@@ -82,6 +83,10 @@ const productions = {
     "$" : [ '=$' ] ,
     "math" : [ '=\\(' , '&anything' , '=\\)' ] ,
     "mathenv" : [ '=\\[' , '&anything' , '=\\]' ] ,
+  } ,
+  "csname" : {
+    "othercmd" : [ '=othercmd' ] ,
+    "csname" : [ '=csname' , '= ' , "&anything" , '=endcsname' ] ,
   } ,
   "argument-subject" : {
     "#" : [ "=#" ] ,
@@ -113,7 +118,7 @@ const productions = {
     "end" : [ ] , // 7.1
   } ,
   "cmdafter" : { // after othercmd
-    "othercmd" : [ "&othercmd" , "&cmdafter" ] ,
+    "othercmd" : [ "&othercmdcall" , "&cmdafter" ] ,
     "begin-environment" : [ "&begin-environment" , "&cmdafter"] ,
     "end-environment" : [ "&end-environment" , "&anything" ] ,
     "]-then-anything" : [ "&]" , "&anything" ] ,
@@ -121,7 +126,7 @@ const productions = {
     "nothing" : [ ] ,
   } ,
   "cmdafter-but-not-]" : { // after othercmd
-    "othercmd" : [ "&othercmd" , "&cmdafter-but-not-]" ] ,
+    "othercmd" : [ "&othercmdcall" , "&cmdafter-but-not-]" ] ,
     "begin-environment" : [ "&begin-environment" , "&cmdafter-but-not-]" ] ,
     "end-environment" : [ "&end-environment" , "&anything-but-]" ] ,
     "something-else-then-anything" : [ "&something-else" , "&anything-but-]" ] ,

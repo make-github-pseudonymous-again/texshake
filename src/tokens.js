@@ -64,6 +64,9 @@ async function* _tokens ( tape ) {
 
 	case '\\newif':
 	case '\\else':
+	case '\\csname':
+	case '\\endcsname':
+	case '\\let':
 	case '\\def':
 	case '\\newcommand':
 	case '\\renewcommand':
