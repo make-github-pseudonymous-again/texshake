@@ -11,7 +11,7 @@ import {
 	shakestream ,
 } from '../../src' ;
 
-const LONG_SEQUENCE_SIZE = 100 ;
+const LONG_SEQUENCE_SIZE = 100000 ;
 
 async function transform ( t , string , expected ) {
 	let output = '' ;
