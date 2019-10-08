@@ -39,11 +39,11 @@
     "regenerator-runtime": "^0.13.3"
   },
   "devDependencies": {
-    "@babel/cli": "7.6.0",
-    "@babel/core": "7.6.0",
+    "@babel/cli": "7.6.3",
+    "@babel/core": "7.6.3",
     "@babel/plugin-proposal-async-generator-functions": "7.2.0",
-    "@babel/preset-env": "7.6.0",
-    "@babel/register": "7.6.0",
+    "@babel/preset-env": "7.6.3",
+    "@babel/register": "7.6.2",
     "ava": "2.4.0",
     "coveralls": "3.0.6",
     "np": "5.1.0",
