@@ -45,7 +45,7 @@
     "@babel/preset-env": "7.6.3",
     "@babel/register": "7.6.2",
     "ava": "2.4.0",
-    "coveralls": "3.0.6",
+    "coveralls": "3.0.7",
     "np": "5.1.1",
     "nyc": "14.1.1"
   },
