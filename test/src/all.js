@@ -23,11 +23,6 @@ async function transform ( t , string , expected ) {
 async function throws ( t , string , expected ) {
 	const out = { 'write' : buffer => undefined } ;
 	await t.throwsAsync(shakestring(string, out), { message: expected });
-	//return shakestring(string, out)
-		//.then( () => t.fail() )
-		//.catch( error => {
-			//t.true(expected.test(error.message));
-		//} ) ;
 }
 
 const immutable = async ( t , string ) => await transform( t , string , string ) ;
