@@ -20,9 +20,9 @@ async function transform ( t , string , expected ) {
 	t.is(output, expected);
 }
 
-function throws ( t , string , expected ) {
+async function throws ( t , string , expected ) {
 	const out = { 'write' : buffer => undefined } ;
-	return t.throwsAsync(shakestring(string, out), expected);
+	await t.throwsAsync(shakestring(string, out), { message: expected });
 	//return shakestring(string, out)
 		//.then( () => t.fail() )
 		//.catch( error => {

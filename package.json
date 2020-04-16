@@ -8,6 +8,7 @@
       "./test/src/**/*"
     ],
     "concurrency": 8,
+    "timeout": "1m",
     "require": [
       "core-js/stable",
       "regenerator-runtime/runtime",
@@ -35,19 +36,19 @@
     "@aureooms/js-grammar": "^8.0.0",
     "@aureooms/js-itertools": "^3.4.0",
     "@aureooms/js-tape": "^7.0.0",
-    "core-js": "^3.2.1",
-    "regenerator-runtime": "^0.13.3"
+    "core-js": "^3.6.5",
+    "regenerator-runtime": "^0.13.5"
   },
   "devDependencies": {
     "@babel/cli": "7.8.4",
-    "@babel/core": "7.8.7",
+    "@babel/core": "7.9.0",
     "@babel/plugin-proposal-async-generator-functions": "7.8.3",
-    "@babel/preset-env": "7.8.7",
-    "@babel/register": "7.8.6",
-    "ava": "2.4.0",
+    "@babel/preset-env": "7.9.5",
+    "@babel/register": "7.9.0",
+    "ava": "3.7.0",
     "coveralls": "3.0.11",
-    "np": "5.2.1",
-    "nyc": "14.1.1"
+    "np": "6.2.1",
+    "nyc": "15.0.1"
   },
   "files": [
     "lib"
