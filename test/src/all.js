@@ -17,7 +17,7 @@ async function transform ( t , string , expected ) {
 	let output = '' ;
 	const out = { 'write' : buffer => output += buffer } ;
 	await shakestring(string, out);
-	t.is(output, expected);
+	t.is(expected, output);
 }
 
 async function throws ( t , string , expected ) {
@@ -37,14 +37,14 @@ async function transformFile ( t , inputFilePath , outputFilePath ) {
 	const readStream = fs.createReadStream( inputFilePath, { encoding } ) ;
 	await shakestream(readStream, out);
 
-	t.is(output, expected);
+	t.is(expected, output);
 }
 
 const immutableFile = async ( t , path ) => await transformFile( t , path , path ) ;
 
-transform.title = ( title , string , expected ) => title || `shakestring('${string}') === '${expected}'` ;
+transform.title = ( title , string , expected ) => title || `shakestring('${JSON.stringify(string)}') === '${JSON.stringify(expected)}'` ;
 
-throws.title = ( title , string , expected ) => title || `throws('${string}') ~ '${expected}'` ;
+throws.title = ( title , string , expected ) => title || `throws('${JSON.stringify(string)}') ~ '${expected}'` ;
 
 immutable.title = ( title , string ) => transform.title( title , string , string ) ;
 
@@ -72,24 +72,24 @@ test( immutable , ' \\ifnum\\mynum>6 x \\else y \\fi ' ) ;
 test( immutable , '*Lorem * ipsum* dolor sit $a*$ \\(m*e^*t_*\\)*' ) ;
 
 // iftrue fi
-test( transform , '\\iftrue ah\\fi' , ' ah' ) ;
+test( transform , '\\iftrue ah\\fi' , 'ah' ) ;
 // iftrue else fi
-test( transform , '\\iftrue ah\\else oh\\fi' , ' ah' ) ;
+test( transform , '\\iftrue ah\\else oh\\fi' , 'ah' ) ;
 // iffalse fi
 test( transform , '\\iffalse ah\\fi' , '' ) ;
 // iffalse else fi
-test( transform , '\\iffalse ah\\else oh\\fi' , ' oh' ) ;
+test( transform , '\\iffalse ah\\else oh\\fi' , 'oh' ) ;
 
 // if fi
-test( transform , '\\abctrue\\ifabc ah\\fi' , ' ah' ) ; // should
-test( transform , '\\abcfalse\\ifabc ah\\fi' , '' ) ; // the
+test( transform , '\\abctrue\\ifabc ah\\fi' , 'ah' ) ;
+test( transform , '\\abcfalse\\ifabc ah\\fi' , '' ) ;
 
 // if else fi
-test( transform , '\\abctrue\\ifabc ah\\else oh\\fi' , ' ah' ) ; // space
-test( transform , '\\abcfalse\\ifabc ah\\else oh\\fi' , ' oh' ) ; // disappear?
+test( transform , '\\abctrue\\ifabc ah\\else oh\\fi' , 'ah' ) ;
+test( transform , '\\abcfalse\\ifabc ah\\else oh\\fi' , 'oh' ) ;
 
 // with a newif
-test( transform , '\\newif\\ifabc\\abctrue\\ifabc ah\\fi' , ' ah' ) ; // should
+test( transform , '\\newif\\ifabc\\abctrue\\ifabc ah\\fi' , 'ah' ) ;
 
 // \iff is not an \ifxxx statement
 test( immutable , '$\\iff$' ) ;
@@ -266,3 +266,38 @@ test( immutable , '\\renewcommand*\\test{test}\\test' ) ;
 
 // throw on defining existing command
 test( throws , '\\newcommand{\\test}{}\\newcommand{\\test}{}' , /test is already defined/) ;
+
+// if-else-fi space eating habits
+test( transform , '\\iftrue%\nin~\\S\\ref{x}.\n\\else%\nin the full version~\\cite{AB12}.\n\\fi' , '%\nin~\\S\\ref{x}.\n' ) ;
+test( transform , '\\iffalse%\nin~\\S\\ref{x}.\n\\else%\nin the full version~\\cite{AB12}.\n\\fi' , '%\nin the full version~\\cite{AB12}.\n' ) ;
+test( transform , '\\iftrue\nin~\\S\\ref{x}.\n\\else\nin the full version~\\cite{AB12}.\n\\fi' , 'in~\\S\\ref{x}.\n' ) ;
+test( transform , '\\iffalse\nin~\\S\\ref{x}.\n\\else\nin the full version~\\cite{AB12}.\n\\fi' , 'in the full version~\\cite{AB12}.\n' ) ;
+test( transform , '\\iftrue \nin~\\S\\ref{x}.\n\\else\nin the full version~\\cite{AB12}.\n\\fi' , '\nin~\\S\\ref{x}.\n' ) ;
+test( transform , '\\iffalse \nin~\\S\\ref{x}.\n\\else\nin the full version~\\cite{AB12}.\n\\fi' , 'in the full version~\\cite{AB12}.\n' ) ;
+test( transform , '\\iftrue\nin~\\S\\ref{x}.\n\\else \nin the full version~\\cite{AB12}.\n\\fi' , 'in~\\S\\ref{x}.\n' ) ;
+test( transform , '\\iffalse\nin~\\S\\ref{x}.\n\\else \nin the full version~\\cite{AB12}.\n\\fi' , '\nin the full version~\\cite{AB12}.\n' ) ;
+
+test( transform , '\\iftrue{}ah\\fi{}oh' , 'ahoh' ) ;
+test( transform , '\\iftrue{}ah\\fi oh' , 'ahoh' ) ;
+test( transform , '\\iftrue{}ah\\fi{} oh' , 'ah oh' ) ;
+test( transform , '\\iftrue{} ah\\fi{} oh' , ' ah oh' ) ;
+test( transform , '\\iftrue{} ah\\fi{}oh' , ' ahoh' ) ;
+
+test( transform , '\\iftrue ah\\fi oh' , 'ahoh' ) ;
+test( transform , '\\iftrue ah\\fi{} oh' , 'ahoh' ) ;
+test( transform , '\\iftrue ah\\fi  oh' , 'ah oh' ) ;
+test( transform , '\\iftrue  ah\\fi  oh' , ' ah oh' ) ;
+test( transform , '\\iftrue  ah\\fi oh' , ' ahoh' ) ;
+
+test( transform , '\\iftrue{}ah\\fi{}' , 'ah' ) ;
+test( transform , '\\iftrue{}ah\\else{}oh\\fi' , 'ah' ) ;
+test( transform , '\\iffalse{}ah\\fi' , '' ) ;
+test( transform , '\\iffalse{}ah\\else{}oh\\fi' , 'oh' ) ;
+
+test( transform , '\\abctrue\\ifabc{}ah\\fi' , 'ah' ) ;
+test( transform , '\\abcfalse\\ifabc{}ah\\fi' , '' ) ;
+
+test( transform , '\\abctrue\\ifabc{}ah\\else{}oh\\fi' , 'ah' ) ;
+test( transform , '\\abcfalse\\ifabc{}ah\\else{}oh\\fi' , 'oh' ) ;
+
+test( transform , '\\newif\\ifabc\\abctrue\\ifabc{}ah\\fi' , 'ah' ) ;
