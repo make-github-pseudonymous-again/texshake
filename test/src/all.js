@@ -17,7 +17,7 @@ async function transform ( t , string , expected ) {
 	let output = '' ;
 	const out = { 'write' : buffer => output += buffer } ;
 	await shakestring(string, out);
-	t.is(output, expected);
+	t.is(expected, output);
 }
 
 async function throws ( t , string , expected ) {
@@ -37,14 +37,14 @@ async function transformFile ( t , inputFilePath , outputFilePath ) {
 	const readStream = fs.createReadStream( inputFilePath, { encoding } ) ;
 	await shakestream(readStream, out);
 
-	t.is(output, expected);
+	t.is(expected, output);
 }
 
 const immutableFile = async ( t , path ) => await transformFile( t , path , path ) ;
 
-transform.title = ( title , string , expected ) => title || `shakestring('${string}') === '${expected}'` ;
+transform.title = ( title , string , expected ) => title || `shakestring('${JSON.stringify(string)}') === '${JSON.stringify(expected)}'` ;
 
-throws.title = ( title , string , expected ) => title || `throws('${string}') ~ '${expected}'` ;
+throws.title = ( title , string , expected ) => title || `throws('${JSON.stringify(string)}') ~ '${expected}'` ;
 
 immutable.title = ( title , string ) => transform.title( title , string , string ) ;
 
