@@ -100,4 +100,4 @@ the shaking logic lies in
   - [alvinwan/TexSoup](https://github.com/alvinwan/TexSoup)
   - [michael-brade/LaTeX.js](https://github.com/michael-brade/LaTeX.js)
   - [WikiToLearn/texla](https://github.com/WikiToLearn/texla)
-  - [LaTeX is Turing-complete](https://tex.stackexchange.com/questions/4201/is-there-a-bnf-grammar-of-the-tex-language)
+  - [Parsing TeX is Turing-complete](https://tex.stackexchange.com/questions/4201/is-there-a-bnf-grammar-of-the-tex-language)
