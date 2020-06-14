@@ -45,7 +45,7 @@
     "@babel/plugin-proposal-async-generator-functions": "7.10.1",
     "@babel/preset-env": "7.10.2",
     "@babel/register": "7.10.1",
-    "ava": "3.8.2",
+    "ava": "3.9.0",
     "coveralls": "3.1.0",
     "np": "6.2.4",
     "nyc": "15.1.0"
