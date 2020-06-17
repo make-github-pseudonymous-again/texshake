@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "@aureooms/js-grammar": "^8.0.0",
-    "@aureooms/js-itertools": "^3.4.0",
+    "@aureooms/js-itertools": "^4.0.0",
     "@aureooms/js-tape": "^7.0.0",
     "core-js": "^3.6.5",
     "regenerator-runtime": "^0.13.5"
