@@ -1,4 +1,4 @@
-texshake
+:leaves: texshake
 ==
 
 > Shake your LaTeX syntax tree!
