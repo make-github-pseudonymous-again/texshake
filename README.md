@@ -3,7 +3,12 @@
 
 > Shake your LaTeX syntax tree!
 
-<img src="http://scribblesinstitute.com/wp-content/uploads/2015/05/NatTree04.jpg" width="864">
+<p align="center">
+<a href="https://scribblesinstitute.com/drawing-lesson-tree">
+<img src="https://ipfs.io/ipfs/QmdosfjJmHtiWtSTVtQcKQp1bWj5hn5JCDuYD2P2spMTZE" width="600">
+</a><br/>
+© <a href="https://scribblesinstitute.com">The Scribbles Institute</a>
+</p>
 
 ```shell
 $ echo '\\newif\\ifah\\ahtrue\\ifah Shake it! :) \\else Do not shake it... :( \\fi' | texshake
