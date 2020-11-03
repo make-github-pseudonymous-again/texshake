@@ -15,9 +15,9 @@ $ echo '\\newif\\ifah\\ahtrue\\ifah Shake it! :) \\else Do not shake it... :( \\
  Shake it! :)
 ```
 
-[![License](https://img.shields.io/github/license/aureooms/texshake.svg)](https://raw.githubusercontent.com/aureooms/texshake/master/LICENSE)
+[![License](https://img.shields.io/github/license/aureooms/texshake.svg)](https://raw.githubusercontent.com/aureooms/texshake/main/LICENSE)
 [![Version](https://img.shields.io/npm/v/texshake.svg)](https://www.npmjs.org/package/texshake)
-[![Build](https://img.shields.io/travis/aureooms/texshake/master.svg)](https://travis-ci.org/aureooms/texshake/branches)
+[![Build](https://img.shields.io/travis/aureooms/texshake/main.svg)](https://travis-ci.org/aureooms/texshake/branches)
 [![Dependencies](https://img.shields.io/david/aureooms/texshake.svg)](https://david-dm.org/aureooms/texshake)
 [![Dev dependencies](https://img.shields.io/david/dev/aureooms/texshake.svg)](https://david-dm.org/aureooms/texshake?type=dev)
 [![GitHub issues](https://img.shields.io/github/issues/aureooms/texshake.svg)](https://github.com/aureooms/texshake/issues)
@@ -80,10 +80,10 @@ I use it for scientific publications. I often need different versions of
 the same paper for different occasions: conference proceedings, journal
 version, arXiv preprint. I just write the content once, with the right
 conditionals, macro definitions and `\input` calls. I flatten everything using
-[`flatex`](https://github.com/aureooms/dotfiles/blob/master/.bin/flatex),
+[`flatex`](https://github.com/aureooms/dotfiles/blob/main/.bin/flatex),
 shake the document with `texshake`, and finally get rid of all extraneous
 blanks with
-[`textrim`](https://github.com/aureooms/dotfiles/blob/master/.bin/textrim).
+[`textrim`](https://github.com/aureooms/dotfiles/blob/main/.bin/textrim).
 
 
 ## How does it work?
@@ -95,10 +95,10 @@ and
 under the hood.
 
 The tokens are produced according to
-[this file](https://github.com/aureooms/texshake/blob/master/src/tokens.js)
+[this file](https://github.com/aureooms/texshake/blob/main/src/tokens.js)
 and
 the shaking logic lies in
-[this file](https://github.com/aureooms/texshake/blob/master/src/transform/shaker.js).
+[this file](https://github.com/aureooms/texshake/blob/main/src/transform/shaker.js).
 
 ## Related
 
