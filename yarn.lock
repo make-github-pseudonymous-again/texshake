@@ -9,22 +9,22 @@
   dependencies:
     "@aureooms/js-error" "^3.0.0"
 
-"@aureooms/js-collections-deque@^4.0.1":
-  version "4.0.1"
-  resolved "https://registry.yarnpkg.com/@aureooms/js-collections-deque/-/js-collections-deque-4.0.1.tgz#bd8b827cdb597d061525c380dd704e338c77bd5f"
-  integrity sha512-dktRVLyep0sUKpqgtG/JseA232KMdlu9t9ePq2wHcng1dZ3+63qW2C+FlKXBktrT1dU92DDxIL6PqnV97kHA1Q==
+"@aureooms/js-collections-deque@^5.0.0":
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/@aureooms/js-collections-deque/-/js-collections-deque-5.0.0.tgz#a574ddc2e53d8e073573f914cec9b130cf5355a8"
+  integrity sha512-28zJhpXGE4D0hQkaZFDYaeA/maUKTTcoHaScbBBzHCu5iy/+sovU7MnSm4URC0EN+R8AH/uVsSS0CFjDMXo6SQ==
   dependencies:
-    "@aureooms/js-error" "^4.0.1"
+    "@aureooms/js-error" "^5.0.1"
 
 "@aureooms/js-error@^3.0.0":
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/@aureooms/js-error/-/js-error-3.0.0.tgz#c06a455569c4cb26c3792ab9c9f075da707823de"
   integrity sha1-wGpFVWnEyybDeSq5yfB12nB4I94=
 
-"@aureooms/js-error@^4.0.1":
-  version "4.0.1"
-  resolved "https://registry.yarnpkg.com/@aureooms/js-error/-/js-error-4.0.1.tgz#be2740b3f31a337e0828930c9b70d38113b4dd77"
-  integrity sha512-zsgs6wmnRsKljlusewYiBaFBM/hIJp43b7OwE9ybpLEL4wfXjGP17cJTTAY8gpzALVFwEA5/flxIK0I6gJJLHQ==
+"@aureooms/js-error@^5.0.1":
+  version "5.0.2"
+  resolved "https://registry.yarnpkg.com/@aureooms/js-error/-/js-error-5.0.2.tgz#dc2ad2fc2b10365581c32c28222daccc5c3c9600"
+  integrity sha512-HLO95kmZ1nJV5qo8Xq7czHVskFGPkM3l60JFgdTnpvCH6P6lkyWDBplaDB9gI5cPvcRIZDs1HeAHhAlHR/jBxw==
 
 "@aureooms/js-grammar@^8.0.0":
   version "8.0.0"
@@ -40,13 +40,13 @@
   dependencies:
     "@aureooms/js-collections-deque" "^3.1.0"
 
-"@aureooms/js-itertools@^4.1.0":
-  version "4.1.0"
-  resolved "https://registry.yarnpkg.com/@aureooms/js-itertools/-/js-itertools-4.1.0.tgz#c731eaee7de0005c6ea41f2f87cca4bdb2d86ca1"
-  integrity sha512-P9TfwQPuXk5T5z6QMMfwLLyzh9QsEu4sGWcBk/P/waWgim/xqr+LDTOHVo7WU4QAty+/5CBX8DuW7MrPVfXt5A==
+"@aureooms/js-itertools@^5.0.0":
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/@aureooms/js-itertools/-/js-itertools-5.0.0.tgz#f0f4e27381b8533ddeb9db7c8f4f05da0522cddd"
+  integrity sha512-LAULGvyCvMjD+V0J4m7PS2QITeG/j3KUxDlSM5rOR7sh0eWZU3jiRMi8H0aBpKhwiVV6AEjXBsMmo3EmhPlJrQ==
   dependencies:
-    "@aureooms/js-collections-deque" "^4.0.1"
-    "@aureooms/js-error" "^4.0.1"
+    "@aureooms/js-collections-deque" "^5.0.0"
+    "@aureooms/js-error" "^5.0.1"
 
 "@aureooms/js-tape@^7.0.0":
   version "7.0.0"
